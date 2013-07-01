@@ -23,28 +23,21 @@ package plotter.tail;
 
 
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.text.MessageFormat;
 
+import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.SpringLayout;
-import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
 
+import plotter.Legend;
 import plotter.xy.DefaultXYLayoutGenerator;
 import plotter.xy.LinearXYAxis;
 import plotter.xy.SlopeLine;
@@ -67,7 +60,13 @@ public class XYPlotFrame extends JFrame {
 
 	private XYAxis yAxis;
 
+	private XYAxis x2Axis;
+
+	private XYAxis y2Axis;
+
 	private XYGrid grid;
+
+	private XYGrid grid2;
 
 	private XYPlotContents contents;
 
@@ -75,11 +74,18 @@ public class XYPlotFrame extends JFrame {
 
 	private SlopeLineDisplay slopeLineDisplay;
 
-    private Legend legend;
+	private Legend legend;
 
+	private boolean useLegend;
+
+	private boolean useX2;
+
+	private boolean useY2;
+
+	private boolean useGrid2;
 
 	public void setup() {
-	    setup(getContentPane());
+		setup(getContentPane());
 	}
 
 
@@ -97,13 +103,42 @@ public class XYPlotFrame extends JFrame {
 		plot.add(yAxis);
 		plot.setXAxis(xAxis);
 		plot.setYAxis(yAxis);
+		if(useX2) {
+			x2Axis = createX2Axis();
+			x2Axis.setMirrored(true);
+			x2Axis.setPreferredSize(new Dimension(1, 40));
+			x2Axis.setForeground(Color.white);
+			x2Axis.setTextMargin(10);
+			plot.add(x2Axis);
+			plot.setX2Axis(x2Axis);
+		}
+		if(useY2) {
+			y2Axis = createY2Axis();
+			y2Axis.setMirrored(true);
+			y2Axis.setPreferredSize(new Dimension(40, 1));
+			y2Axis.setForeground(Color.white);
+			y2Axis.setTextMargin(10);
+			plot.add(y2Axis);
+			plot.setY2Axis(y2Axis);
+		}
 		plot.setBackground(Color.darkGray);
 		contents = new XYPlotContents();
 		contents.setBackground(Color.black);
 		plot.setBackground(Color.darkGray);
+
 		grid = new XYGrid(xAxis, yAxis);
 		grid.setForeground(Color.lightGray);
 		contents.add(grid);
+
+		if(useGrid2) {
+			if(!useX2 || !useY2) {
+				throw new IllegalStateException("If useGrid2 is enabled, then useX2 and useY2 must be enabled");
+			}
+			grid2 = new XYGrid(x2Axis, y2Axis);
+			grid2.setForeground(Color.lightGray);
+			contents.add(grid2);
+		}
+
 		plot.add(contents);
 		plot.setPreferredSize(new Dimension(150, 100));
 
@@ -135,22 +170,16 @@ public class XYPlotFrame extends JFrame {
 		slopeLineDisplay.setFormat(new MessageFormat("<html><b>&Delta;x:</b> {0}  <b>&Delta;y:</b> {1}</html>"));
 		plot.add(slopeLineDisplay);
 
-        legend = new Legend();
-        plot.add(legend, 0);
+		if(useLegend) {
+			legend = new Legend();
+			legend.setForeground(Color.white);
+			legend.setBackground(Color.black);
+			legend.setFont(new Font("Arial", 0, 12));
+			legend.setBorder(BorderFactory.createMatteBorder(0, 1, 1, 0, Color.darkGray));
+			plot.add(legend, 0);
+		}
 
-        new DefaultXYLayoutGenerator().generateLayout(plot);
-
-		SpringLayout layout2 = (SpringLayout) plot.getLayout();
-		layout2.putConstraint(SpringLayout.NORTH, locationDisplay, 0, SpringLayout.NORTH, plot);
-		layout2.putConstraint(SpringLayout.WEST, locationDisplay, 0, SpringLayout.WEST, contents);
-		layout2.putConstraint(SpringLayout.EAST, locationDisplay, 0, SpringLayout.HORIZONTAL_CENTER, contents);
-		layout2.putConstraint(SpringLayout.NORTH, contents, 0, SpringLayout.SOUTH, locationDisplay);
-		layout2.putConstraint(SpringLayout.NORTH, slopeLineDisplay, 0, SpringLayout.NORTH, plot);
-		layout2.putConstraint(SpringLayout.WEST, slopeLineDisplay, 0, SpringLayout.HORIZONTAL_CENTER, contents);
-		layout2.putConstraint(SpringLayout.EAST, slopeLineDisplay, 0, SpringLayout.EAST, contents);
-        layout2.putConstraint(SpringLayout.NORTH, legend, 0, SpringLayout.NORTH, contents);
-        layout2.putConstraint(SpringLayout.EAST, legend, 0, SpringLayout.EAST, contents);
-		yAxis.setEndMargin((int) locationDisplay.getPreferredSize().getHeight());
+		new DefaultXYLayoutGenerator().generateLayout(plot);
 
 		SpringLayout layout = new SpringLayout();
 		contentPane.setLayout(layout);
@@ -159,13 +188,18 @@ public class XYPlotFrame extends JFrame {
 		layout.putConstraint(SpringLayout.EAST, contentPane, 0, SpringLayout.EAST, plot);
 		contentPane.add(plot);
 
-        new MarkerListener().attach(contents, xAxis);
-        new MarkerListener().attach(contents, yAxis);
-        new DragListener().attach(xAxis);
-        new DragListener().attach(yAxis);
-        new ScaleListener().attach(xAxis);
-        new ScaleListener().attach(yAxis);
-    }
+		new MarkerListener().attach(contents, xAxis);
+		new MarkerListener().attach(contents, yAxis);
+		if(useY2) {
+			new MarkerListener().attach(contents, y2Axis);
+			new DragListener().attach(contents, y2Axis);
+			new ScaleListener().attach(contents, y2Axis);
+		}
+		new DragListener().attach(contents, xAxis);
+		new DragListener().attach(contents, yAxis);
+		new ScaleListener().attach(contents, xAxis);
+		new ScaleListener().attach(contents, yAxis);
+	}
 
 
 	protected XYAxis createYAxis() {
@@ -178,18 +212,34 @@ public class XYPlotFrame extends JFrame {
 	}
 
 
-    public void addPlotLine(JComponent plotLine) {
-        addPlotLine(null, (XYPlotLine) plotLine);
-    }
+	protected XYAxis createY2Axis() {
+		return new LinearXYAxis(XYDimension.Y);
+	}
 
 
-    public void addPlotLine(String name, XYPlotLine plotLine) {
-        contents.add(plotLine);
-        contents.setComponentZOrder(grid, contents.getComponentCount() - 1);
-        if(name != null) {
-            legend.addLine(name, plotLine);
-        }
-    }
+	protected XYAxis createX2Axis() {
+		return new LinearXYAxis(XYDimension.X);
+	}
+
+
+	/**
+	 * @deprecated Use {@link #addPlotLine(String,XYPlotLine)} instead
+	 */
+	public void addPlotLine(JComponent plotLine) {
+		addPlotLine(null, (XYPlotLine)plotLine);
+	}
+
+
+	public void addPlotLine(String description, XYPlotLine plotLine) {
+		contents.add(plotLine);
+		contents.setComponentZOrder(grid, contents.getComponentCount() - 1);
+		if(description != null && legend != null) {
+			legend.addLine(description, plotLine);
+		}
+		if(grid2 != null) {
+			contents.setComponentZOrder(grid2, contents.getComponentCount() - 1);
+		}
+	}
 
 
 	public XYAxis getXAxis() {
@@ -199,6 +249,16 @@ public class XYPlotFrame extends JFrame {
 
 	public XYAxis getYAxis() {
 		return yAxis;
+	}
+
+
+	public XYAxis getX2Axis() {
+		return x2Axis;
+	}
+
+
+	public XYAxis getY2Axis() {
+		return y2Axis;
 	}
 
 
@@ -222,6 +282,60 @@ public class XYPlotFrame extends JFrame {
 	}
 
 
+	public boolean isUseLegend() {
+		return useLegend;
+	}
+
+
+	public void setUseLegend(boolean useLegend) {
+		this.useLegend = useLegend;
+	}
+
+	public Legend getLegend() {
+		return legend;
+	}
+
+
+	public boolean isUseX2() {
+		return useX2;
+	}
+
+
+    public void setUseX2(boolean useX2) {
+        this.useX2 = useX2;
+    }
+
+
+    public boolean isUseY2() {
+        return useY2;
+    }
+
+
+    public void setUseY2(boolean useY2) {
+        this.useY2 = useY2;
+    }
+
+
+    public boolean isUseGrid2() {
+        return useGrid2;
+    }
+
+
+    public void setUseGrid2(boolean useGrid2) {
+        this.useGrid2 = useGrid2;
+    }
+
+
+    public XYGrid getGrid() {
+        return grid;
+    }
+
+
+    public XYGrid getGrid2() {
+        return grid2;
+    }
+
+
     private static class MarkerListener implements MouseListener, MouseMotionListener {
         private static final int MASK = InputEvent.ALT_DOWN_MASK | InputEvent.ALT_GRAPH_DOWN_MASK
                 | InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK;
@@ -233,7 +347,7 @@ public class XYPlotFrame extends JFrame {
         XYMarkerLine markerLine;
 
         boolean isy;
-        
+
 
         public void attach(XYPlotContents contents, XYAxis axis) {
             if(this.axis != null) {
@@ -305,6 +419,8 @@ public class XYPlotFrame extends JFrame {
         private static final int MASK = InputEvent.ALT_DOWN_MASK | InputEvent.ALT_GRAPH_DOWN_MASK
                 | InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK;
 
+        XYPlotContents contents;
+
         XYAxis axis;
 
         boolean isy;
@@ -314,10 +430,11 @@ public class XYPlotFrame extends JFrame {
         boolean active;
 
 
-        public void attach(XYAxis axis) {
+        public void attach(XYPlotContents contents, XYAxis axis) {
             if(this.axis != null) {
                 throw new IllegalStateException("Already attached");
             }
+            this.contents = contents;
             this.axis = axis;
             isy = axis.getPlotDimension() == XYDimension.Y;
             axis.addMouseListener(this);
@@ -362,6 +479,7 @@ public class XYPlotFrame extends JFrame {
                 int physicalPos = isy ? e.getY() : e.getX();
                 double logicalPos = axis.toLogical(physicalPos);
                 axis.shift(logicalAnchor - logicalPos);
+                contents.repaint(); // TODO: Should the Axis.shift method handle this?
             }
         }
 
@@ -376,6 +494,8 @@ public class XYPlotFrame extends JFrame {
         private static final int MASK = InputEvent.ALT_DOWN_MASK | InputEvent.ALT_GRAPH_DOWN_MASK
                 | InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK;
 
+        XYPlotContents contents;
+
         XYAxis axis;
 
         boolean isy;
@@ -387,10 +507,11 @@ public class XYPlotFrame extends JFrame {
         boolean active;
 
 
-        public void attach(XYAxis axis) {
+        public void attach(XYPlotContents contents, XYAxis axis) {
             if(this.axis != null) {
                 throw new IllegalStateException("Already attached");
             }
+            this.contents = contents;
             this.axis = axis;
             isy = axis.getPlotDimension() == XYDimension.Y;
             axis.addMouseListener(this);
@@ -438,67 +559,13 @@ public class XYPlotFrame extends JFrame {
                 double scale = (logicalAnchor - midpoint) / (logicalPos - midpoint);
                 axis.setStart(scale * (axis.getStart() - midpoint) + midpoint);
                 axis.setEnd(scale * (axis.getEnd() - midpoint) + midpoint);
+                contents.repaint(); // TODO: Should the Axis.setStart and Axis.setEnd methods handle this?
             }
         }
 
 
         @Override
         public void mouseMoved(MouseEvent e) {
-        }
-    }
-
-
-    public static class Legend extends JComponent {
-        public Legend() {
-            setLayout(new GridBagLayout());
-            setBackground(Color.black);
-            setForeground(Color.white);
-            setOpaque(true);
-            setBorder(new LineBorder(Color.gray));
-        }
-
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            g.setColor(getBackground());
-            g.fillRect(0, 0, getWidth(), getHeight());
-        }
-
-
-        public void addLine(String name, XYPlotLine line) {
-            GridBagConstraints c = new GridBagConstraints();
-            c.insets = new Insets(0, 2, 0, 2);
-            LineSample sample = new LineSample(line);
-            sample.setPreferredSize(new Dimension(20, 10));
-            add(sample, c);
-
-            c.insets = new Insets(0, 2, 0, 2);
-            c.gridwidth = GridBagConstraints.REMAINDER;
-            JLabel label = new JLabel(name);
-            Font font = label.getFont();
-            font = font.deriveFont(0);
-            label.setFont(font);
-            label.setForeground(getForeground());
-            add(label, c);
-        }
-
-
-        private static class LineSample extends JComponent {
-            final XYPlotLine line;
-
-
-            public LineSample(XYPlotLine line) {
-                this.line = line;
-            }
-
-
-            @Override
-            public void paint(Graphics g) {
-                g.setColor(line.getForeground());
-                int x = getWidth();
-                int y = getHeight() / 2;
-                g.drawLine(0, y, x, y);
-            }
         }
     }
 }
