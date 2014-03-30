@@ -91,6 +91,7 @@ public class TailPlot {
         System.err.println("  -s, --select=FIELDS           comma-separated list of field indices to plot (1-based)");        
         System.err.println("      --y2=FIELDS               comma-separated list of field indices to place on the Y2 axis (1-based)");
         System.err.println("  -h, --header-line             use the first line as a header line");
+        System.err.println("  -t, --title=TITLE             set the window title (defaults to the file name)");
         System.err.println("      --help                    display this message");
         System.err.println();
         System.err.println("Notes:");
@@ -106,6 +107,7 @@ public class TailPlot {
     public void run(String[] args) throws IOException {
         boolean headerLine = false;
         String fieldString = null;
+        String title = null;
         for(int i = 0; i < args.length; i++) {
             if(args[i].equals("-F")) {
                 fieldSeparator = Pattern.compile(args[++i]);
@@ -123,6 +125,10 @@ public class TailPlot {
                 y2 = parseIntList(args[i].substring("--y2=".length()));
             } else if(args[i].equals("--header-line") || args[i].equals("-h")) {
                 headerLine = true;
+            } else if(args[i].equals("-t")) {
+                title = args[++i];
+            } else if(args[i].startsWith("--title=")) {
+                title = args[i].substring("--title=".length());
             } else if(args[i].equals("--help") || args[i].equals("-h")) {
                 usage(null);
             } else if(args[i].startsWith("-")) {
@@ -177,6 +183,13 @@ public class TailPlot {
                 minFieldCount = Math.max(minFieldCount, i);
             }
         }
+        if(title == null) {
+            if(file == null) {
+                title = "<standard input>";
+            } else {
+                title = file.getPath();
+            }
+        }
 
         frame = new XYPlotFrame();
         frame.setUseY2(y2 != null);
@@ -203,11 +216,7 @@ public class TailPlot {
         splitPane.setOneTouchExpandable(true);
         splitPane.setDividerLocation(0);
         frame.setContentPane(splitPane);
-        if(file == null) {
-            frame.setTitle("<standard input>");
-        } else {
-            frame.setTitle(file.getPath());
-        }
+        frame.setTitle(title);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setup(content);
 
