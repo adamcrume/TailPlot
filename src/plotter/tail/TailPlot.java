@@ -66,6 +66,8 @@ public class TailPlot {
     // Only access from the Swing thread
     private double max2;
 
+    private boolean firstLineRead;
+
 
     public static void main(String[] args) {
         try {
@@ -355,8 +357,13 @@ public class TailPlot {
 
 
     private double[] processLine(boolean headerLine, int lineNumber, String line) {
+        String trimmed = line.trim();
+        if(trimmed.isEmpty() || trimmed.startsWith("#")) {
+            return null;
+        }
         String[] data = fieldSeparator.split(line);
-        if(lineNumber == 1) {
+        if(!firstLineRead) {
+            firstLineRead = true;
             if(fields.isEmpty()) {
                 String[] data2 = select(data, lineNumber);
                 for(int i = 0; i < data2.length; i++) {
