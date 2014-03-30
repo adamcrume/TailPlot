@@ -3,6 +3,8 @@ package plotter.tail;
 import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -14,6 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -67,6 +70,8 @@ public class TailPlot {
     private double max2;
 
     private boolean firstLineRead;
+
+    private boolean restart;
 
 
     public static void main(String[] args) {
@@ -189,6 +194,7 @@ public class TailPlot {
                 title = file.getPath();
             }
         }
+        boolean restartable = file != null;
 
         frame = new XYPlotFrame();
         frame.setUseY2(y2 != null);
@@ -211,6 +217,15 @@ public class TailPlot {
         } else {
             autoScaleY2 = null;
         }
+        final JButton restartButton = new JButton("Restart");
+        restartButton.setEnabled(restartable);
+        restartButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                restart();
+            }
+        });
+        settings.add(restartButton, constraints);
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, settings, content);
         splitPane.setOneTouchExpandable(true);
         splitPane.setDividerLocation(0);
@@ -250,105 +265,130 @@ public class TailPlot {
             }
         };
 
-        BufferedReader in;
-        if(file == null) {
-            in = new BufferedReader(new InputStreamReader(System.in));
-        } else {
-            in = new BufferedReader(new FileReader(file));
-        }
-        try {
-            yAxis.setStart(0);
-            yAxis.setEnd(1);
-            xAxis.setStart(0);
-            xAxis.setEnd(1);
-            if(y2Axis != null) {
-                y2Axis.setStart(0);
-                y2Axis.setEnd(1);
+        frame.setSize(400, 300);
+        frame.setVisible(true);
+
+        while(true) {
+            BufferedReader in;
+            if(file == null) {
+                in = new BufferedReader(new InputStreamReader(System.in));
+            } else {
+                in = new BufferedReader(new FileReader(file));
             }
-
-            frame.setSize(400, 300);
-            frame.setVisible(true);
-
-            min = Double.POSITIVE_INFINITY;
-            max = Double.NEGATIVE_INFINITY;
-            min2 = Double.POSITIVE_INFINITY;
-            max2 = Double.NEGATIVE_INFINITY;
-
-            int lineNumber = 0;
-            final List<double[]> buffer = new ArrayList<double[]>();
-            while(true) {
-                String line = in.readLine();
-                if(line == null) {
-                    if(file == null) {
-                        break;
+            try {
+                for(Field f : fields) {
+                    if(f.dataset != null) {
+                        f.dataset.removeAllPoints();
                     }
-                    try {
-                        Thread.sleep(100);
-                    } catch(InterruptedException e) {
-                    }
-                    continue;
                 }
-                lineNumber++;
-
-                final double[] ddata = processLine(headerLine, lineNumber, line);
-
-                if(ddata == null) {
-                    continue;
+                points = 0;
+                if(autoScaleY.isSelected()) {
+                    yAxis.setStart(0);
+                    yAxis.setEnd(1);
+                }
+                if(autoScaleX.isSelected()) {
+                    xAxis.setStart(0);
+                    xAxis.setEnd(1);
+                }
+                if(y2Axis != null && autoScaleY2.isSelected()) {
+                    y2Axis.setStart(0);
+                    y2Axis.setEnd(1);
                 }
 
-                synchronized(buffer) {
-                    boolean empty = buffer.isEmpty();
-                    buffer.add(ddata);
-                    if(empty) {
-                        SwingUtilities.invokeLater(new Runnable() {
-                            @Override
-                            public void run() {
-                                synchronized(buffer) {
-                                    for(double[] ddata : buffer) {
-                                        for(int i = 0; i < ddata.length; i++) {
-                                            double val = ddata[i];
-                                            Field field = fields.get(i);
-                                            if(field.onY2) {
-                                                if(val < min2) {
-                                                    min2 = val;
+                min = Double.POSITIVE_INFINITY;
+                max = Double.NEGATIVE_INFINITY;
+                min2 = Double.POSITIVE_INFINITY;
+                max2 = Double.NEGATIVE_INFINITY;
+
+                int lineNumber = 0;
+                final List<double[]> buffer = new ArrayList<double[]>();
+                while(true) {
+                    synchronized(this) {
+                        if(restart) {
+                            restart = false;
+                            break;
+                        }
+                    }
+                    String line = in.readLine();
+                    if(line == null) {
+                        if(file == null) {
+                            break;
+                        }
+                        try {
+                            Thread.sleep(100);
+                        } catch(InterruptedException e) {
+                        }
+                        continue;
+                    }
+                    lineNumber++;
+
+                    final double[] ddata = processLine(headerLine, lineNumber, line);
+
+                    if(ddata == null) {
+                        continue;
+                    }
+
+                    synchronized(buffer) {
+                        boolean empty = buffer.isEmpty();
+                        buffer.add(ddata);
+                        if(empty) {
+                            SwingUtilities.invokeLater(new Runnable() {
+                                @Override
+                                public void run() {
+                                    synchronized(buffer) {
+                                        for(double[] ddata : buffer) {
+                                            for(int i = 0; i < ddata.length; i++) {
+                                                double val = ddata[i];
+                                                Field field = fields.get(i);
+                                                if(field.onY2) {
+                                                    if(val < min2) {
+                                                        min2 = val;
+                                                    }
+                                                    if(val > max2) {
+                                                        max2 = val;
+                                                    }
+                                                } else {
+                                                    if(val < min) {
+                                                        min = val;
+                                                    }
+                                                    if(val > max) {
+                                                        max = val;
+                                                    }
                                                 }
-                                                if(val > max2) {
-                                                    max2 = val;
-                                                }
-                                            } else {
-                                                if(val < min) {
-                                                    min = val;
-                                                }
-                                                if(val > max) {
-                                                    max = val;
-                                                }
+                                                field.dataset.add(points, val);
                                             }
-                                            field.dataset.add(points, val);
+                                            points++;
                                         }
-                                        points++;
+                                        buffer.clear();
                                     }
-                                    buffer.clear();
+                                    if(min != Double.POSITIVE_INFINITY && autoScaleY.isSelected()) {
+                                        double margin = .1 * (max - min);
+                                        yAxis.setStart(min - margin);
+                                        yAxis.setEnd(max + margin);
+                                    }
+                                    if(min2 != Double.POSITIVE_INFINITY && autoScaleY2.isSelected()) {
+                                        double margin = .1 * (max2 - min2);
+                                        y2Axis.setStart(min2 - margin);
+                                        y2Axis.setEnd(max2 + margin);
+                                    }
+                                    if(autoScaleX.isSelected()) {
+                                        xAxis.setEnd(points);
+                                    }
                                 }
-                                if(min != Double.POSITIVE_INFINITY && autoScaleY.isSelected()) {
-                                    double margin = .1 * (max - min);
-                                    yAxis.setStart(min - margin);
-                                    yAxis.setEnd(max + margin);
-                                }
-                                if(min2 != Double.POSITIVE_INFINITY && autoScaleY2.isSelected()) {
-                                    double margin = .1 * (max2 - min2);
-                                    y2Axis.setStart(min2 - margin);
-                                    y2Axis.setEnd(max2 + margin);
-                                }
-                                if(autoScaleX.isSelected()) {
-                                    xAxis.setEnd(points);
-                                }
-                            }
-                        });
+                            });
+                        }
                     }
                 }
+            } finally {
+                in.close();
             }
-        } finally {
-            in.close();
+        }
+    }
+
+
+    protected void restart() {
+        synchronized(this) {
+            restart = true;
         }
     }
 
