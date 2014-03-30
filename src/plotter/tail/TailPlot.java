@@ -142,9 +142,6 @@ public class TailPlot {
                 file = new File(args[i]);
             }
         }
-        if(headerLine && fieldString != null) {
-            usage("Cannot specify both --header-line and --fields");
-        }
         if(y2 != null) {
             for(int i = 0; i < y2.length; i++) {
                 int ix = y2[i];
