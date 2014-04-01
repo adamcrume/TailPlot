@@ -217,6 +217,10 @@ public class TailPlot {
         } else {
             autoScaleY2 = null;
         }
+        final JCheckBox autorestartCheckbox = new JCheckBox("Auto-restart if file shrinks");
+        autorestartCheckbox.setSelected(restartable);
+        autorestartCheckbox.setEnabled(restartable);
+        settings.add(autorestartCheckbox, constraints);
         final JButton restartButton = new JButton("Restart");
         restartButton.setEnabled(restartable);
         restartButton.addActionListener(new ActionListener() {
@@ -302,7 +306,15 @@ public class TailPlot {
 
                 int lineNumber = 0;
                 final List<double[]> buffer = new ArrayList<double[]>();
+                long oldFileSize = 0;
                 while(true) {
+                    if(file != null && autorestartCheckbox.isSelected()) {
+                        long fileSize = file.length();
+                        if(fileSize < oldFileSize) {
+                            restart();
+                        }
+                        oldFileSize = fileSize;
+                    }
                     synchronized(this) {
                         if(restart) {
                             restart = false;
