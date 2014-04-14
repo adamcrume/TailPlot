@@ -22,11 +22,13 @@ package plotter.tail;
  *******************************************************************************/
 
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.InputEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -36,8 +38,10 @@ import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.SpringLayout;
+import javax.swing.SwingConstants;
 
 import plotter.Legend;
+import plotter.LegendItem;
 import plotter.xy.DefaultXYLayoutGenerator;
 import plotter.xy.LinearXYAxis;
 import plotter.xy.SlopeLine;
@@ -230,11 +234,26 @@ public class XYPlotFrame extends JFrame {
 	}
 
 
-	public void addPlotLine(String description, XYPlotLine plotLine) {
+	public void addPlotLine(String description, final XYPlotLine plotLine) {
 		contents.add(plotLine);
 		contents.setComponentZOrder(grid, contents.getComponentCount() - 1);
 		if(description != null && legend != null) {
-			legend.addLine(description, plotLine);
+			final LegendItem item = new LegendItem(description, plotLine, null, SwingConstants.LEFT);
+			item.addMouseListener(new MouseAdapter() {
+				@Override
+				public void mouseEntered(MouseEvent e) {
+					plotLine.setStroke(new BasicStroke(3));
+					plotLine.repaint();
+					item.repaint();
+				}
+				@Override
+				public void mouseExited(MouseEvent e) {
+					plotLine.setStroke(null);
+					plotLine.repaint();
+					item.repaint();
+				}
+			});
+			legend.add(item);
 		}
 		if(grid2 != null) {
 			contents.setComponentZOrder(grid2, contents.getComponentCount() - 1);
