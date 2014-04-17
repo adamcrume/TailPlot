@@ -93,7 +93,7 @@ public class TailPlot {
         System.err.println("If no file is specified, standard input is read.");
         System.err.println();
         System.err.println("Options:");
-        System.err.println("  -F, --field-separator=REGEX   set the field separator regex");
+        System.err.println("  -F, --field-separator=REGEX   set the field separator regex (default: [,\\t ]+)");
         System.err.println("  -f, --fields=FIELDS           field names (separated by the field separator)");
         System.err.println("  -s, --select=FIELDS           comma-separated list of field indices to plot (1-based)");        
         System.err.println("      --y2=FIELDS               comma-separated list of field indices to place on the Y2 axis (1-based)");
