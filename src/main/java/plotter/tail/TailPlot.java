@@ -45,6 +45,8 @@ public class TailPlot {
 
     private BitSet y2PostSelection = new BitSet();
 
+    private int x = -1;
+
     private int minFieldCount;
 
     private XYPlotFrame frame;
@@ -57,7 +59,6 @@ public class TailPlot {
 
     private Iterator<Color> colors;
 
-    // Only access from the Swing thread
     private int points;
 
     // Only access from the Swing thread
@@ -71,6 +72,12 @@ public class TailPlot {
 
     // Only access from the Swing thread
     private double max2;
+
+    // Only access from the Swing thread
+    private double xmin;
+
+    // Only access from the Swing thread
+    private double xmax;
 
     private boolean firstLineRead;
 
@@ -100,6 +107,7 @@ public class TailPlot {
         System.err.println("  -f, --fields=FIELDS           field names (separated by the field separator)");
         System.err.println("  -s, --select=FIELDS           comma-separated list of field indices to plot (1-based)");        
         System.err.println("      --y2=FIELDS               comma-separated list of field indices to place on the Y2 axis (1-based)");
+        System.err.println("  -x, --x=INDEX                 index of field to use as X value. Note that X values must be monotonically increasing. (1-based, default: line number is X value)");
         System.err.println("  -h, --header-line             use the first line as a header line");
         System.err.println("  -t, --title=TITLE             set the window title (defaults to the file name)");
         System.err.println("      --help                    display this message");
@@ -133,6 +141,10 @@ public class TailPlot {
                 selection = parseIntList(args[i].substring("--select=".length()));
             } else if(args[i].startsWith("--y2=")) {
                 y2 = parseIntList(args[i].substring("--y2=".length()));
+            } else if(args[i].startsWith("-x")) {
+                x = Integer.parseInt(args[++i]);
+            } else if(args[i].startsWith("--x=")) {
+                x = Integer.parseInt(args[i].substring("--x=".length()));
             } else if(args[i].equals("--header-line") || args[i].equals("-h")) {
                 headerLine = true;
             } else if(args[i].equals("-t")) {
@@ -306,6 +318,8 @@ public class TailPlot {
                 max = Double.NEGATIVE_INFINITY;
                 min2 = Double.POSITIVE_INFINITY;
                 max2 = Double.NEGATIVE_INFINITY;
+                xmin = Double.POSITIVE_INFINITY;
+                xmax = Double.NEGATIVE_INFINITY;
 
                 int lineNumber = 0;
                 final List<double[]> buffer = new ArrayList<double[]>();
@@ -352,9 +366,10 @@ public class TailPlot {
                                 public void run() {
                                     synchronized(buffer) {
                                         for(double[] ddata : buffer) {
-                                            for(int i = 0; i < ddata.length; i++) {
+                                            double xVal = ddata[0];
+                                            for(int i = 1; i < ddata.length; i++) {
                                                 double val = ddata[i];
-                                                Field field = fields.get(i);
+                                                Field field = fields.get(i - 1);
                                                 if(field.onY2) {
                                                     if(val < min2) {
                                                         min2 = val;
@@ -370,9 +385,14 @@ public class TailPlot {
                                                         max = val;
                                                     }
                                                 }
-                                                field.dataset.add(points, val);
+                                                field.dataset.add(xVal, val);
                                             }
-                                            points++;
+                                            if(xVal < xmin) {
+                                                xmin = xVal;
+                                            }
+                                            if(xVal > xmax) {
+                                                xmax = xVal;
+                                            }
                                         }
                                         buffer.clear();
                                     }
@@ -386,8 +406,10 @@ public class TailPlot {
                                         y2Axis.setStart(min2 - margin);
                                         y2Axis.setEnd(max2 + margin);
                                     }
-                                    if(autoScaleX.isSelected()) {
-                                        xAxis.setEnd(points);
+                                    if(xmin != Double.POSITIVE_INFINITY && autoScaleX.isSelected()) {
+                                        double margin = .1 * (xmax - xmin);
+                                        xAxis.setStart(xmin - margin);
+                                        xAxis.setEnd(xmax + margin);
                                     }
                                 }
                             });
@@ -422,8 +444,6 @@ public class TailPlot {
                     String name;
                     if(headerLine) {
                         name = data2[i];
-                    } else if(selection != null) {
-                        name = "Column " + selection[i];
                     } else {
                         name = "Column " + (i + 1);
                     }
@@ -451,21 +471,33 @@ public class TailPlot {
             }
         }
 
-        data = select(data, lineNumber);
-        if(data == null) {
+        String[] data2 = select(data, lineNumber);
+        if(data2 == null) {
             return null;
         }
 
-        final double[] ddata = new double[data.length];
-        for(int i = 0; i < data.length; i++) {
+        final double[] ddata = new double[data2.length + 1];
+        if(x == -1) {
+            ddata[0] = points;
+        } else {
+            String xString = data[x - 1];
             try {
-                ddata[i] = Double.parseDouble(data[i]);
+                ddata[0] = Double.parseDouble(xString);
             } catch(NumberFormatException e) {
-                System.err.println("Invalid value on line " + lineNumber + " for \"" + fields.get(i).name
-                        + "\": " + data[i]);
-                ddata[i] = Double.NaN;
+                System.err.println("Invalid X value on line " + lineNumber + ": " + xString);
+                ddata[0] = Double.NaN;
             }
         }
+        for(int i = 0; i < data2.length; i++) {
+            try {
+                ddata[i + 1] = Double.parseDouble(data2[i]);
+            } catch(NumberFormatException e) {
+                System.err.println("Invalid value on line " + lineNumber + " for \"" + fields.get(i).name
+                        + "\": " + data2[i]);
+                ddata[i + 1] = Double.NaN;
+            }
+        }
+        points++;
         return ddata;
     }
 
@@ -477,7 +509,21 @@ public class TailPlot {
             return null;
         }
         if(selection == null) {
-            return data;
+            if(x == -1) {
+                selection = new int[data.length];
+                for(int i = 0; i < selection.length; i++) {
+                    selection[i] = i + 1;
+                }
+            } else {
+                // Default not to plot the X value (it would just draw a diagonal)
+                selection = new int[data.length - 1];
+                for(int i = 0; i < x - 1; i++) {
+                    selection[i] = i + 1;
+                }
+                for(int i = x - 1; i < selection.length; i++) {
+                    selection[i] = i + 2;
+                }
+            }
         }
 
         String[] ret = new String[selection.length];
