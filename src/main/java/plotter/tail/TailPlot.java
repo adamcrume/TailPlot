@@ -1,8 +1,11 @@
 package plotter.tail;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Shape;
+import java.awt.Stroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
@@ -433,11 +436,14 @@ public class TailPlot {
             }
             for(Field f : fields) {
                 final LinearXYPlotLine pline = new LinearXYPlotLine(xAxis, f.onY2 ? y2Axis : yAxis, XYDimension.X);
+                Stroke highlightStroke = new BasicStroke(3);
+                Shape highlightPointFill = null;
+                Shape highlightPointOutline = null;
                 pline.setForeground(colors.next());
                 SimpleXYDataset dataset = new SimpleXYDataset(pline);
                 dataset.setXData(pline.getXData());
                 dataset.setYData(pline.getYData());
-                frame.addPlotLine(f.name, pline);
+                frame.addPlotLine(f.name, pline, highlightStroke, highlightPointFill, highlightPointOutline);
                 f.dataset = dataset;
             }
             if(headerLine) {

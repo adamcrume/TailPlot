@@ -22,11 +22,12 @@ package plotter.tail;
  *******************************************************************************/
 
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Shape;
+import java.awt.Stroke;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -35,7 +36,6 @@ import java.awt.event.MouseMotionListener;
 import java.text.MessageFormat;
 
 import javax.swing.BorderFactory;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.SpringLayout;
 import javax.swing.SwingConstants;
@@ -226,29 +226,32 @@ public class XYPlotFrame extends JFrame {
 	}
 
 
-	/**
-	 * @deprecated Use {@link #addPlotLine(String,XYPlotLine)} instead
-	 */
-	public void addPlotLine(JComponent plotLine) {
-		addPlotLine(null, (XYPlotLine)plotLine);
-	}
-
-
-	public void addPlotLine(String description, final XYPlotLine plotLine) {
+	public void addPlotLine(String description, final XYPlotLine plotLine, final Stroke highlightStroke, final Shape highlightPointFill, final Shape highlightPointOutline) {
 		contents.add(plotLine);
 		contents.setComponentZOrder(grid, contents.getComponentCount() - 1);
 		if(description != null && legend != null) {
 			final LegendItem item = new LegendItem(description, plotLine, null, SwingConstants.LEFT);
 			item.addMouseListener(new MouseAdapter() {
+				Stroke originalStroke;
+				Shape originalPointFill;
+				Shape originalPointOutline;
+
 				@Override
 				public void mouseEntered(MouseEvent e) {
-					plotLine.setStroke(new BasicStroke(3));
+					originalStroke = plotLine.getStroke();
+					originalPointFill = plotLine.getPointFill();
+					originalPointOutline = plotLine.getPointOutline();
+					plotLine.setStroke(highlightStroke);
+					plotLine.setPointFill(highlightPointFill);
+					plotLine.setPointOutline(highlightPointOutline);
 					plotLine.repaint();
 					item.repaint();
 				}
 				@Override
 				public void mouseExited(MouseEvent e) {
-					plotLine.setStroke(null);
+					plotLine.setStroke(originalStroke);
+					plotLine.setPointFill(originalPointFill);
+					plotLine.setPointOutline(originalPointOutline);
 					plotLine.repaint();
 					item.repaint();
 				}
