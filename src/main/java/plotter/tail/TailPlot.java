@@ -13,10 +13,17 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import javax.swing.JButton;
@@ -26,6 +33,7 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 
+import plotter.DateNumberFormat;
 import plotter.xy.LinearXYAxis;
 import plotter.xy.SimpleXYDataset;
 import plotter.xy.XYAxis;
@@ -36,6 +44,8 @@ public class TailPlot {
 
     private List<Field> fields = new ArrayList<Field>();
 
+    private Map<Integer, NumberFormat> fieldFormats = new HashMap<Integer, NumberFormat>();
+
     private Pattern fieldSeparator = Pattern.compile("[,\t ]+");
 
     private int[] selection;
@@ -45,6 +55,8 @@ public class TailPlot {
     private BitSet y2PostSelection = new BitSet();
 
     private int x = -1;
+
+    private NumberFormat xInputFormat;
 
     private int minFieldCount;
 
@@ -107,6 +119,7 @@ public class TailPlot {
         System.err.println("  -s, --select=FIELDS           comma-separated list of field indices to plot (1-based)");        
         System.err.println("      --y2=FIELDS               comma-separated list of field indices to place on the Y2 axis (1-based)");
         System.err.println("  -x, --x=INDEX                 index of field to use as X value. Note that X values must be monotonically increasing. (1-based, default: line number is X value)");
+        System.err.println("      --field-format=FIELD,FMT  input format of a field. Example: 1,time,YYY-MM-dd_HH:mm:ss to read field 1 as a timestamp (default: number)");
         System.err.println("  -h, --header-line             use the first line as a header line");
         System.err.println("  -t, --title=TITLE             set the window title (defaults to the file name)");
         System.err.println("      --help                    display this message");
@@ -144,6 +157,26 @@ public class TailPlot {
                 x = Integer.parseInt(args[++i]);
             } else if(args[i].startsWith("--x=")) {
                 x = Integer.parseInt(args[i].substring("--x=".length()));
+            } else if(args[i].startsWith("--field-format=")) {
+                String s = args[i].substring("--field-format=".length());
+                int ix = s.indexOf(",");
+                int fieldIx = Integer.parseInt(s.substring(0, ix));
+                String format = s.substring(ix + 1);
+                NumberFormat fmt;
+                if(format.equals("date")) {
+                    fmt = new DateNumberFormat(DateFormat.getInstance());
+                } else if(format.startsWith("date,")) {
+                    fmt = new DateNumberFormat(new SimpleDateFormat(format.substring("date,".length())));
+                } else if(format.equals("number")) {
+                    fmt = NumberFormat.getInstance();
+                } else if(format.startsWith("number,")) {
+                    fmt = new DecimalFormat(format.substring("number,".length()));
+                } else {
+                    System.err.println("Unrecognized number format: " + format);
+                    System.exit(1);
+                    fmt = null;
+                }
+                fieldFormats.put(fieldIx, fmt);
             } else if(args[i].equals("--header-line") || args[i].equals("-h")) {
                 headerLine = true;
             } else if(args[i].equals("-t")) {
@@ -207,6 +240,10 @@ public class TailPlot {
             } else {
                 title = file.getPath();
             }
+        }
+        if(x != -1) {
+            NumberFormat format = fieldFormats.get(x);
+            xInputFormat = format == null ? NumberFormat.getInstance() : format;
         }
         boolean restartable = file != null;
 
@@ -453,6 +490,15 @@ public class TailPlot {
                     fields.add(new Field(name, onY2));
                 }
             }
+
+            if(fields.get(0).format == null) {
+                assert fields.size() == selection.length;
+                for(int i = 0; i < selection.length; i++) {
+                    NumberFormat format = fieldFormats.get(selection[i]);
+                    fields.get(i).format = format == null ? NumberFormat.getInstance() : format;
+                }
+            }
+
             for(Field f : fields) {
                 final MultiplexingXYPlotLine pline = new MultiplexingXYPlotLine(xAxis, f.onY2 ? y2Axis : yAxis, XYDimension.X);
                 Stroke highlightStroke = new BasicStroke(3);
@@ -481,16 +527,16 @@ public class TailPlot {
         } else {
             String xString = data[x - 1];
             try {
-                ddata[0] = Double.parseDouble(xString);
-            } catch(NumberFormatException e) {
+                ddata[0] = xInputFormat.parse(xString).doubleValue();
+            } catch(ParseException e) {
                 System.err.println("Invalid X value on line " + lineNumber + ": " + xString);
                 ddata[0] = Double.NaN;
             }
         }
         for(int i = 0; i < data2.length; i++) {
             try {
-                ddata[i + 1] = Double.parseDouble(data2[i]);
-            } catch(NumberFormatException e) {
+                ddata[i + 1] = fields.get(i).format.parse(data2[i]).doubleValue();
+            } catch(ParseException e) {
                 System.err.println("Invalid value on line " + lineNumber + " for \"" + fields.get(i).name
                         + "\": " + data2[i]);
                 ddata[i + 1] = Double.NaN;
@@ -549,6 +595,8 @@ public class TailPlot {
         private String name;
 
         private boolean onY2;
+
+        public NumberFormat format;
 
 
         public Field(String name, boolean onY2) {
