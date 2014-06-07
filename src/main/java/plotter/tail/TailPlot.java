@@ -27,7 +27,6 @@ import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 
 import plotter.xy.LinearXYAxis;
-import plotter.xy.LinearXYPlotLine;
 import plotter.xy.SimpleXYDataset;
 import plotter.xy.XYAxis;
 import plotter.xy.XYDimension;
@@ -455,7 +454,7 @@ public class TailPlot {
                 }
             }
             for(Field f : fields) {
-                final LinearXYPlotLine pline = new LinearXYPlotLine(xAxis, f.onY2 ? y2Axis : yAxis, XYDimension.X);
+                final MultiplexingXYPlotLine pline = new MultiplexingXYPlotLine(xAxis, f.onY2 ? y2Axis : yAxis, XYDimension.X);
                 Stroke highlightStroke = new BasicStroke(3);
                 Shape highlightPointFill = null;
                 Shape highlightPointOutline = null;
