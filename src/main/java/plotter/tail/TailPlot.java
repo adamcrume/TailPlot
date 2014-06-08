@@ -34,6 +34,7 @@ import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 
 import plotter.DateNumberFormat;
+import plotter.TimeTickMarkCalculator;
 import plotter.xy.LinearXYAxis;
 import plotter.xy.SimpleXYDataset;
 import plotter.xy.XYAxis;
@@ -57,6 +58,12 @@ public class TailPlot {
     private int x = -1;
 
     private NumberFormat xInputFormat;
+
+    private NumberFormat xAxisFormat;
+
+    private NumberFormat yAxisFormat;
+
+    private NumberFormat y2AxisFormat;
 
     private int minFieldCount;
 
@@ -120,6 +127,9 @@ public class TailPlot {
         System.err.println("      --y2=FIELDS               comma-separated list of field indices to place on the Y2 axis (1-based)");
         System.err.println("  -x, --x=INDEX                 index of field to use as X value. Note that X values must be monotonically increasing. (1-based, default: line number is X value)");
         System.err.println("      --field-format=FIELD,FMT  input format of a field. Example: 1,time,YYY-MM-dd_HH:mm:ss to read field 1 as a timestamp (default: number)");
+        System.err.println("      --x-format=FMT            display format of the X axis. Example: time,YYY-MM-dd_HH:mm:ss to display as a timestamp (default: number)");
+        System.err.println("      --y-format=FMT            display format of the Y axis. Example: time,YYY-MM-dd_HH:mm:ss to display as a timestamp (default: number)");
+        System.err.println("      --y2-format=FMT           display format of the Y2 axis. Example: time,YYY-MM-dd_HH:mm:ss to display as a timestamp (default: number)");
         System.err.println("  -h, --header-line             use the first line as a header line");
         System.err.println("  -t, --title=TITLE             set the window title (defaults to the file name)");
         System.err.println("      --help                    display this message");
@@ -163,20 +173,47 @@ public class TailPlot {
                 int fieldIx = Integer.parseInt(s.substring(0, ix));
                 String format = s.substring(ix + 1);
                 NumberFormat fmt;
-                if(format.equals("date")) {
-                    fmt = new DateNumberFormat(DateFormat.getInstance());
-                } else if(format.startsWith("date,")) {
-                    fmt = new DateNumberFormat(new SimpleDateFormat(format.substring("date,".length())));
-                } else if(format.equals("number")) {
-                    fmt = NumberFormat.getInstance();
-                } else if(format.startsWith("number,")) {
-                    fmt = new DecimalFormat(format.substring("number,".length()));
-                } else {
-                    System.err.println("Unrecognized number format: " + format);
-                    System.exit(1);
+                try {
+                    fmt = parseFormat(format);
+                } catch(ParseException e) {
+                    System.err.println(e.getMessage());
+                    System.exit(-1);
                     fmt = null;
                 }
                 fieldFormats.put(fieldIx, fmt);
+            } else if(args[i].startsWith("--x-format=")) {
+                String format = args[i].substring("--x-format=".length());
+                NumberFormat fmt;
+                try {
+                    fmt = parseFormat(format);
+                } catch(ParseException e) {
+                    System.err.println(e.getMessage());
+                    System.exit(-1);
+                    fmt = null;
+                }
+                xAxisFormat = fmt;
+            } else if(args[i].startsWith("--y-format=")) {
+                String format = args[i].substring("--y-format=".length());
+                NumberFormat fmt;
+                try {
+                    fmt = parseFormat(format);
+                } catch(ParseException e) {
+                    System.err.println(e.getMessage());
+                    System.exit(-1);
+                    fmt = null;
+                }
+                yAxisFormat = fmt;
+            } else if(args[i].startsWith("--y2-format=")) {
+                String format = args[i].substring("--y2-format=".length());
+                NumberFormat fmt;
+                try {
+                    fmt = parseFormat(format);
+                } catch(ParseException e) {
+                    System.err.println(e.getMessage());
+                    System.exit(-1);
+                    fmt = null;
+                }
+                y2AxisFormat = fmt;
             } else if(args[i].equals("--header-line") || args[i].equals("-h")) {
                 headerLine = true;
             } else if(args[i].equals("-t")) {
@@ -292,6 +329,24 @@ public class TailPlot {
         xAxis = (LinearXYAxis) frame.getXAxis();
         yAxis = frame.getYAxis();
         y2Axis = frame.getY2Axis();
+        if(xAxisFormat != null) {
+            if(xAxisFormat instanceof DateNumberFormat) {
+                xAxis.setTickMarkCalculator(new TimeTickMarkCalculator());
+            }
+            xAxis.setFormat(xAxisFormat);
+        }
+        if(yAxisFormat != null) {
+            if(yAxisFormat instanceof DateNumberFormat) {
+                yAxis.setTickMarkCalculator(new TimeTickMarkCalculator());
+            }
+            yAxis.setFormat(yAxisFormat);
+        }
+        if(y2Axis != null && y2AxisFormat != null) {
+            if(y2AxisFormat instanceof DateNumberFormat) {
+                y2Axis.setTickMarkCalculator(new TimeTickMarkCalculator());
+            }
+            y2Axis.setFormat(y2AxisFormat);
+        }
 
         colors = new Iterator<Color>() {
             Color[] colors = new Color[] { Color.red, Color.green, Color.blue, Color.yellow, Color.orange, Color.cyan,
@@ -456,6 +511,23 @@ public class TailPlot {
                 in.close();
             }
         }
+    }
+
+
+    private NumberFormat parseFormat(String format) throws ParseException {
+        NumberFormat fmt;
+        if(format.equals("date")) {
+            fmt = new DateNumberFormat(DateFormat.getInstance());
+        } else if(format.startsWith("date,")) {
+            fmt = new DateNumberFormat(new SimpleDateFormat(format.substring("date,".length())));
+        } else if(format.equals("number")) {
+            fmt = NumberFormat.getInstance();
+        } else if(format.startsWith("number,")) {
+            fmt = new DecimalFormat(format.substring("number,".length()));
+        } else {
+            throw new ParseException("Unrecognized number format: " + format, 0);
+        }
+        return fmt;
     }
 
 
