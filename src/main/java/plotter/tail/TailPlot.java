@@ -34,7 +34,6 @@ import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 
 import plotter.DateNumberFormat;
-import plotter.TimeTickMarkCalculator;
 import plotter.xy.LinearXYAxis;
 import plotter.xy.SimpleXYDataset;
 import plotter.xy.XYAxis;
@@ -59,12 +58,6 @@ public class TailPlot {
 
     private NumberFormat xInputFormat;
 
-    private NumberFormat xAxisFormat = new DefaultAxisFormat();
-
-    private NumberFormat yAxisFormat = new DefaultAxisFormat();
-
-    private NumberFormat y2AxisFormat = new DefaultAxisFormat();
-
     private int minFieldCount;
 
     private XYPlotFrame frame;
@@ -79,23 +72,11 @@ public class TailPlot {
 
     private int points;
 
-    // Only access from the Swing thread
-    private double min;
+    private MetaAxis metaX = new MetaAxis();
 
-    // Only access from the Swing thread
-    private double max;
+    private MetaAxis metaY = new MetaAxis();
 
-    // Only access from the Swing thread
-    private double min2;
-
-    // Only access from the Swing thread
-    private double max2;
-
-    // Only access from the Swing thread
-    private double xmin;
-
-    // Only access from the Swing thread
-    private double xmax;
+    private MetaAxis metaY2 = new MetaAxis();
 
     private boolean firstLineRead;
 
@@ -191,7 +172,7 @@ public class TailPlot {
                     System.exit(-1);
                     fmt = null;
                 }
-                xAxisFormat = fmt;
+                metaX.setFormat(fmt);
             } else if(args[i].startsWith("--y-format=")) {
                 String format = args[i].substring("--y-format=".length());
                 NumberFormat fmt;
@@ -202,7 +183,7 @@ public class TailPlot {
                     System.exit(-1);
                     fmt = null;
                 }
-                yAxisFormat = fmt;
+                metaY.setFormat(fmt);
             } else if(args[i].startsWith("--y2-format=")) {
                 String format = args[i].substring("--y2-format=".length());
                 NumberFormat fmt;
@@ -213,7 +194,7 @@ public class TailPlot {
                     System.exit(-1);
                     fmt = null;
                 }
-                y2AxisFormat = fmt;
+                metaY2.setFormat(fmt);
             } else if(args[i].equals("--header-line") || args[i].equals("-h")) {
                 headerLine = true;
             } else if(args[i].equals("-t")) {
@@ -291,19 +272,10 @@ public class TailPlot {
         JPanel settings = new JPanel(new GridBagLayout());
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridwidth = GridBagConstraints.REMAINDER;
-        final JCheckBox autoScaleX = new JCheckBox("Auto-scale X axis");
-        autoScaleX.setSelected(true);
-        settings.add(autoScaleX, constraints);
-        final JCheckBox autoScaleY = new JCheckBox("Auto-scale Y axis");
-        autoScaleY.setSelected(true);
-        settings.add(autoScaleY, constraints);
-        final JCheckBox autoScaleY2;
+        settings.add(metaX.createAutoscaleCheckbox("Auto-scale X axis"), constraints);
+        settings.add(metaY.createAutoscaleCheckbox("Auto-scale Y axis"), constraints);
         if(y2 != null) {
-            autoScaleY2 = new JCheckBox("Auto-scale Y2 axis");
-            autoScaleY2.setSelected(true);
-            settings.add(autoScaleY2, constraints);
-        } else {
-            autoScaleY2 = null;
+            settings.add(metaY2.createAutoscaleCheckbox("Auto-scale Y2 axis"), constraints);
         }
         final JCheckBox autorestartCheckbox = new JCheckBox("Auto-restart if file shrinks");
         autorestartCheckbox.setSelected(restartable);
@@ -329,20 +301,9 @@ public class TailPlot {
         xAxis = (LinearXYAxis) frame.getXAxis();
         yAxis = frame.getYAxis();
         y2Axis = frame.getY2Axis();
-        if(xAxisFormat instanceof DateNumberFormat) {
-            xAxis.setTickMarkCalculator(new TimeTickMarkCalculator());
-        }
-        xAxis.setFormat(xAxisFormat);
-        if(yAxisFormat instanceof DateNumberFormat) {
-            yAxis.setTickMarkCalculator(new TimeTickMarkCalculator());
-        }
-        yAxis.setFormat(yAxisFormat);
-        if(y2Axis != null) {
-            if(y2AxisFormat instanceof DateNumberFormat) {
-                y2Axis.setTickMarkCalculator(new TimeTickMarkCalculator());
-            }
-            y2Axis.setFormat(y2AxisFormat);
-        }
+        metaX.setAxis(xAxis);
+        metaY.setAxis(yAxis);
+        metaY2.setAxis(y2Axis);
 
         colors = new Iterator<Color>() {
             Color[] colors = new Color[] { Color.red, Color.green, Color.blue, Color.yellow, Color.orange, Color.cyan,
@@ -388,25 +349,9 @@ public class TailPlot {
                     }
                 }
                 points = 0;
-                if(autoScaleY.isSelected()) {
-                    yAxis.setStart(0);
-                    yAxis.setEnd(1);
-                }
-                if(autoScaleX.isSelected()) {
-                    xAxis.setStart(0);
-                    xAxis.setEnd(1);
-                }
-                if(y2Axis != null && autoScaleY2.isSelected()) {
-                    y2Axis.setStart(0);
-                    y2Axis.setEnd(1);
-                }
-
-                min = Double.POSITIVE_INFINITY;
-                max = Double.NEGATIVE_INFINITY;
-                min2 = Double.POSITIVE_INFINITY;
-                max2 = Double.NEGATIVE_INFINITY;
-                xmin = Double.POSITIVE_INFINITY;
-                xmax = Double.NEGATIVE_INFINITY;
+                metaY.resetMinMax();
+                metaY2.resetMinMax();
+                metaX.resetMinMax();
 
                 int lineNumber = 0;
                 final List<double[]> buffer = new ArrayList<double[]>();
@@ -458,46 +403,19 @@ public class TailPlot {
                                                 double val = ddata[i];
                                                 Field field = fields.get(i - 1);
                                                 if(field.onY2) {
-                                                    if(val < min2) {
-                                                        min2 = val;
-                                                    }
-                                                    if(val > max2) {
-                                                        max2 = val;
-                                                    }
+                                                    metaY2.updateMinMax(val);
                                                 } else {
-                                                    if(val < min) {
-                                                        min = val;
-                                                    }
-                                                    if(val > max) {
-                                                        max = val;
-                                                    }
+                                                    metaY.updateMinMax(val);
                                                 }
                                                 field.dataset.add(xVal, val);
                                             }
-                                            if(xVal < xmin) {
-                                                xmin = xVal;
-                                            }
-                                            if(xVal > xmax) {
-                                                xmax = xVal;
-                                            }
+                                            metaX.updateMinMax(xVal);
                                         }
                                         buffer.clear();
                                     }
-                                    if(min != Double.POSITIVE_INFINITY && autoScaleY.isSelected()) {
-                                        double margin = .1 * (max - min);
-                                        yAxis.setStart(min - margin);
-                                        yAxis.setEnd(max + margin);
-                                    }
-                                    if(min2 != Double.POSITIVE_INFINITY && autoScaleY2.isSelected()) {
-                                        double margin = .1 * (max2 - min2);
-                                        y2Axis.setStart(min2 - margin);
-                                        y2Axis.setEnd(max2 + margin);
-                                    }
-                                    if(xmin != Double.POSITIVE_INFINITY && autoScaleX.isSelected()) {
-                                        double margin = .1 * (xmax - xmin);
-                                        xAxis.setStart(xmin - margin);
-                                        xAxis.setEnd(xmax + margin);
-                                    }
+                                    metaY.commitMinMax();
+                                    metaY2.commitMinMax();
+                                    metaX.commitMinMax();
                                 }
                             });
                         }
