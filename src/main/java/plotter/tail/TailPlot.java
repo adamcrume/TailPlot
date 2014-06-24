@@ -59,11 +59,11 @@ public class TailPlot {
 
     private NumberFormat xInputFormat;
 
-    private NumberFormat xAxisFormat;
+    private NumberFormat xAxisFormat = new DefaultAxisFormat();
 
-    private NumberFormat yAxisFormat;
+    private NumberFormat yAxisFormat = new DefaultAxisFormat();
 
-    private NumberFormat y2AxisFormat;
+    private NumberFormat y2AxisFormat = new DefaultAxisFormat();
 
     private int minFieldCount;
 
@@ -329,19 +329,15 @@ public class TailPlot {
         xAxis = (LinearXYAxis) frame.getXAxis();
         yAxis = frame.getYAxis();
         y2Axis = frame.getY2Axis();
-        if(xAxisFormat != null) {
-            if(xAxisFormat instanceof DateNumberFormat) {
-                xAxis.setTickMarkCalculator(new TimeTickMarkCalculator());
-            }
-            xAxis.setFormat(xAxisFormat);
+        if(xAxisFormat instanceof DateNumberFormat) {
+            xAxis.setTickMarkCalculator(new TimeTickMarkCalculator());
         }
-        if(yAxisFormat != null) {
-            if(yAxisFormat instanceof DateNumberFormat) {
-                yAxis.setTickMarkCalculator(new TimeTickMarkCalculator());
-            }
-            yAxis.setFormat(yAxisFormat);
+        xAxis.setFormat(xAxisFormat);
+        if(yAxisFormat instanceof DateNumberFormat) {
+            yAxis.setTickMarkCalculator(new TimeTickMarkCalculator());
         }
-        if(y2Axis != null && y2AxisFormat != null) {
+        yAxis.setFormat(yAxisFormat);
+        if(y2Axis != null) {
             if(y2AxisFormat instanceof DateNumberFormat) {
                 y2Axis.setTickMarkCalculator(new TimeTickMarkCalculator());
             }
