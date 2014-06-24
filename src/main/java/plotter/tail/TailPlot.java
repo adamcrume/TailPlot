@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
+import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -34,6 +35,7 @@ import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 
 import plotter.DateNumberFormat;
+import plotter.DoubleData;
 import plotter.xy.LinearXYAxis;
 import plotter.xy.SimpleXYDataset;
 import plotter.xy.XYAxis;
@@ -58,6 +60,10 @@ public class TailPlot {
 
     private NumberFormat xInputFormat;
 
+    private XYFormat slopeFormat = new XYFormat(new MessageFormat("<html><b>&Delta;x:</b> {0}  <b>&Delta;y:</b> {1}</html>"));
+
+    private XYFormat locationFormat = new XYFormat(new MessageFormat("<html><b>X:</b> {0} &nbsp; <b>Y:</b> {1}</html>"));
+
     private int minFieldCount;
 
     private XYPlotFrame frame;
@@ -72,11 +78,63 @@ public class TailPlot {
 
     private int points;
 
-    private MetaAxis metaX = new MetaAxis();
+    private MetaAxis metaX = new MetaAxis() {
+        public List<DoubleData> getDatasets() {
+            List<DoubleData> datasets = new ArrayList<DoubleData>();
+            for(Field f : fields) {
+                datasets.add(f.dataset.getXData());
+            }
+            return datasets;
+        }
 
-    private MetaAxis metaY = new MetaAxis();
 
-    private MetaAxis metaY2 = new MetaAxis();
+        @Override
+        protected void logscaleUpdated(boolean logscale) {
+            locationFormat.setLogX(logscale);
+            slopeFormat.setLogX(logscale);
+            frame.getPlot().repaint();
+        }
+    };
+
+    private MetaAxis metaY = new MetaAxis() {
+        @Override
+        public List<DoubleData> getDatasets() {
+            List<DoubleData> datasets = new ArrayList<DoubleData>();
+            for(Field f : fields) {
+                if(!f.onY2) {
+                    datasets.add(f.dataset.getYData());
+                }
+            }
+            return datasets;
+        }
+
+
+        @Override
+        protected void logscaleUpdated(boolean logscale) {
+            locationFormat.setLogY(logscale);
+            slopeFormat.setLogY(logscale);
+            frame.getPlot().repaint();
+        }
+    };
+
+    private MetaAxis metaY2 = new MetaAxis() {
+        @Override
+        public List<DoubleData> getDatasets() {
+            List<DoubleData> datasets = new ArrayList<DoubleData>();
+            for(Field f : fields) {
+                if(!f.onY2) {
+                    datasets.add(f.dataset.getYData());
+                }
+            }
+            return datasets;
+        }
+
+
+        @Override
+        protected void logscaleUpdated(boolean logscale) {
+            frame.getPlot().repaint();
+        }
+    };
 
     private boolean firstLineRead;
 
@@ -277,6 +335,11 @@ public class TailPlot {
         if(y2 != null) {
             settings.add(metaY2.createAutoscaleCheckbox("Auto-scale Y2 axis"), constraints);
         }
+        settings.add(metaX.createLogscaleCheckbox("Logarithmic X axis"), constraints);
+        settings.add(metaY.createLogscaleCheckbox("Logarithmic Y axis"), constraints);
+        if(y2 != null) {
+            settings.add(metaY2.createLogscaleCheckbox("Logarithmic Y2 axis"), constraints);
+        }
         final JCheckBox autorestartCheckbox = new JCheckBox("Auto-restart if file shrinks");
         autorestartCheckbox.setSelected(restartable);
         autorestartCheckbox.setEnabled(restartable);
@@ -304,6 +367,8 @@ public class TailPlot {
         metaX.setAxis(xAxis);
         metaY.setAxis(yAxis);
         metaY2.setAxis(y2Axis);
+        frame.getLocationDisplay().setFormat(locationFormat);
+        frame.getSlopeLineDisplay().setTextFormat(slopeFormat);
 
         colors = new Iterator<Color>() {
             Color[] colors = new Color[] { Color.red, Color.green, Color.blue, Color.yellow, Color.orange, Color.cyan,
