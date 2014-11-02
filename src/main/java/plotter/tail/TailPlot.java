@@ -2,8 +2,11 @@ package plotter.tail;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.event.ActionEvent;
@@ -30,9 +33,13 @@ import java.util.regex.Pattern;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import plotter.DateNumberFormat;
 import plotter.DoubleData;
@@ -330,6 +337,12 @@ public class TailPlot {
         JPanel settings = new JPanel(new GridBagLayout());
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridwidth = GridBagConstraints.REMAINDER;
+        constraints.weightx = 1.0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        GridBagConstraints labelConstraints = new GridBagConstraints();
+        labelConstraints.gridwidth = 1;
+        labelConstraints.insets = new Insets(0, 0, 0, 5);
+        labelConstraints.anchor = GridBagConstraints.LINE_START;
         settings.add(metaX.createAutoscaleCheckbox("Auto-scale X axis"), constraints);
         settings.add(metaY.createAutoscaleCheckbox("Auto-scale Y axis"), constraints);
         if(y2 != null) {
@@ -344,6 +357,70 @@ public class TailPlot {
         autorestartCheckbox.setSelected(restartable);
         autorestartCheckbox.setEnabled(restartable);
         settings.add(autorestartCheckbox, constraints);
+
+        JLabel xMarginLabel = new JLabel("Bottom margin:");
+        final JSpinner xMarginSpinner = new JSpinner();
+        xMarginSpinner.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                if(xAxis != null) {
+                    int value = (Integer) xMarginSpinner.getValue();
+                    xAxis.setPreferredSize(new Dimension(xAxis.getPreferredSize().width, value));
+                    xAxis.getParent().revalidate();
+                    yAxis.setStartMargin(value);
+                    yAxis.revalidate();
+                    if(y2Axis != null) {
+                        y2Axis.setStartMargin(value);
+                        y2Axis.revalidate();
+                    }
+                }
+            }
+        });
+        xMarginLabel.setLabelFor(xMarginSpinner);
+        settings.add(xMarginLabel, labelConstraints);
+        settings.add(xMarginSpinner, constraints);
+
+        JLabel yMarginLabel = new JLabel("Left margin:");
+        final JSpinner yMarginSpinner = new JSpinner();
+        yMarginSpinner.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                if(yAxis != null) {
+                    int value = (Integer) yMarginSpinner.getValue();
+                    yAxis.setPreferredSize(new Dimension(value, yAxis.getPreferredSize().height));
+                    yAxis.getParent().revalidate();
+                    xAxis.setStartMargin(value);
+                    xAxis.revalidate();
+                }
+            }
+        });
+        yMarginLabel.setLabelFor(yMarginSpinner);
+        settings.add(yMarginLabel, labelConstraints);
+        settings.add(yMarginSpinner, constraints);
+
+        final JSpinner y2MarginSpinner;
+        if(y2 == null) {
+            y2MarginSpinner = null;
+        } else {
+            JLabel y2MarginLabel = new JLabel("Right margin:");
+            y2MarginSpinner = new JSpinner();
+            y2MarginSpinner.addChangeListener(new ChangeListener() {
+                @Override
+                public void stateChanged(ChangeEvent e) {
+                    if(y2Axis != null) {
+                        int value = (Integer) y2MarginSpinner.getValue();
+                        y2Axis.setPreferredSize(new Dimension(value, y2Axis.getPreferredSize().height));
+                        y2Axis.getParent().revalidate();
+                        xAxis.setEndMargin(value);
+                        xAxis.revalidate();
+                    }
+                }
+            });
+            y2MarginLabel.setLabelFor(y2MarginSpinner);
+            settings.add(y2MarginLabel, labelConstraints);
+            settings.add(y2MarginSpinner, constraints);
+        }
+
         final JButton restartButton = new JButton("Restart");
         restartButton.setEnabled(restartable);
         restartButton.addActionListener(new ActionListener() {
@@ -364,6 +441,11 @@ public class TailPlot {
         xAxis = (LinearXYAxis) frame.getXAxis();
         yAxis = frame.getYAxis();
         y2Axis = frame.getY2Axis();
+        xMarginSpinner.setValue(xAxis.getPreferredSize().height);
+        yMarginSpinner.setValue(yAxis.getPreferredSize().width);
+        if(y2 != null) {
+            y2MarginSpinner.setValue(y2Axis.getPreferredSize().width);
+        }
         metaX.setAxis(xAxis);
         metaY.setAxis(yAxis);
         metaY2.setAxis(y2Axis);
