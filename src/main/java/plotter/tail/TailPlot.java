@@ -2,7 +2,6 @@ package plotter.tail;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -67,9 +66,9 @@ public class TailPlot {
 
     private NumberFormat xInputFormat;
 
-    private XYFormat slopeFormat = new XYFormat(new MessageFormat("<html><b>&Delta;x:</b> {0}  <b>&Delta;y:</b> {1}</html>"));
+    private XYFormat slopeFormat;
 
-    private XYFormat locationFormat = new XYFormat(new MessageFormat("<html><b>X:</b> {0} &nbsp; <b>Y:</b> {1}</html>"));
+    private XYFormat locationFormat;
 
     private int minFieldCount;
 
@@ -449,6 +448,21 @@ public class TailPlot {
         metaX.setAxis(xAxis);
         metaY.setAxis(yAxis);
         metaY2.setAxis(y2Axis);
+
+        MessageFormat innerSlopeFormat = new MessageFormat("<html><b>&Delta;x:</b> {0}  <b>&Delta;y:</b> {1}</html>");
+        MessageFormat innerLocationFormat = new MessageFormat("<html><b>X:</b> {0} &nbsp; <b>Y:</b> {1}</html>");
+        NumberFormat xFormat = metaX.getFormat();
+        if(xFormat != null) {
+            innerSlopeFormat.setFormatByArgumentIndex(0, xFormat);
+            innerLocationFormat.setFormatByArgumentIndex(0, xFormat);
+        }
+        NumberFormat yFormat = metaY.getFormat();
+        if(yFormat != null) {
+            innerSlopeFormat.setFormatByArgumentIndex(1, yFormat);
+            innerLocationFormat.setFormatByArgumentIndex(1, yFormat);
+        }
+        slopeFormat = new XYFormat(innerSlopeFormat);
+        locationFormat = new XYFormat(innerLocationFormat);
         frame.getLocationDisplay().setFormat(locationFormat);
         frame.getSlopeLineDisplay().setTextFormat(slopeFormat);
 
