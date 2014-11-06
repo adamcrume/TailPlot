@@ -592,9 +592,13 @@ public class TailPlot {
     private NumberFormat parseFormat(String format) throws ParseException {
         NumberFormat fmt;
         if(format.equals("date")) {
-            fmt = new DateNumberFormat(DateFormat.getInstance());
+            fmt = new DateNumberFormat(DateFormat.getDateInstance());
         } else if(format.startsWith("date,")) {
             fmt = new DateNumberFormat(new SimpleDateFormat(format.substring("date,".length())));
+        } else if(format.equals("time")) {
+            fmt = new DateNumberFormat(DateFormat.getTimeInstance());
+        } else if(format.startsWith("time,")) {
+            fmt = new DateNumberFormat(new SimpleDateFormat(format.substring("time,".length())));
         } else if(format.equals("number")) {
             fmt = NumberFormat.getInstance();
         } else if(format.startsWith("number,")) {
