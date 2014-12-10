@@ -31,7 +31,7 @@ abstract class MetaAxis {
 
     private boolean logscale;
 
-    private double scrollWidth;
+    private double scrollWidth = Double.NaN;
 
 
     public abstract List<DoubleData> getDatasets();
@@ -121,9 +121,6 @@ abstract class MetaAxis {
 
 
     public void updateMinMax(double val) {
-        if(logscale) {
-            val = Math.log10(val);
-        }
         if(val < min) {
             min = val;
         }
@@ -135,14 +132,19 @@ abstract class MetaAxis {
 
     public void commitMinMax() {
         if(min != Double.POSITIVE_INFINITY && isAutoscale()) {
-            double min = this.min;
-            if(scrollWidth != 0) {
-                min = max - scrollWidth;
-            }
-            double margin = .1 * (max - min);
-            axis.setStart(min - margin);
-            axis.setEnd(max + margin);
+            autoMinMax();
         }
+    }
+
+
+    private void autoMinMax() {
+        double min = this.min;
+        if(!Double.isNaN(scrollWidth)) {
+            min = max - scrollWidth;
+        }
+        double margin = .1 * (max - min);
+        axis.setStart(min - margin);
+        axis.setEnd(max + margin);
     }
 
 
@@ -159,10 +161,15 @@ abstract class MetaAxis {
     private void makeLinear() {
         axis.setTickMarkCalculator(new LinearTickMarkCalculator());
         axis.setFormat(format);
-        axis.setStart(Math.pow(10, axis.getStart()));
-        axis.setEnd(Math.pow(10, axis.getEnd()));
         min = Math.pow(10, min);
         max = Math.pow(10, max);
+        scrollWidth = Math.pow(10, scrollWidth);
+        if(isAutoscale()) {
+            autoMinMax();
+        } else {
+            axis.setStart(Math.pow(10, axis.getStart()));
+            axis.setEnd(Math.pow(10, axis.getEnd()));
+        }
         for(DoubleData data : getDatasets()) {
             int n = data.getLength();
             for(int i = 0; i < n; i++) {
@@ -175,18 +182,23 @@ abstract class MetaAxis {
     private void makeLog() {
         axis.setTickMarkCalculator(new LogTickMarkCalculator());
         axis.setFormat(new ExpFormat(format));
-        if(axis.getStart() <= 0) {
-            axis.setStart(1e-100);
-        } else {
-            axis.setStart(Math.log10(axis.getStart()));
-        }
-        if(axis.getEnd() <= 0) {
-            axis.setEnd(1e-100);
-        } else {
-            axis.setEnd(Math.log10(axis.getEnd()));
-        }
         min = Math.log10(min);
         max = Math.log10(max);
+        scrollWidth = Math.log10(scrollWidth);
+        if(isAutoscale()) {
+            autoMinMax();
+        } else {
+            if(axis.getStart() <= 0) {
+                axis.setStart(1e-100);
+            } else {
+                axis.setStart(Math.log10(axis.getStart()));
+            }
+            if(axis.getEnd() <= 0) {
+                axis.setEnd(1e-100);
+            } else {
+                axis.setEnd(Math.log10(axis.getEnd()));
+            }
+        }
         for(DoubleData data : getDatasets()) {
             int n = data.getLength();
             for(int i = 0; i < n; i++) {

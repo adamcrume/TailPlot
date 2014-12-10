@@ -572,14 +572,22 @@ public class TailPlot {
                                     synchronized(buffer) {
                                         for(double[] ddata : buffer) {
                                             double xVal = ddata[0];
+                                            if(metaX.isLogscale()) {
+                                                xVal = Math.log10(xVal);
+                                            }
                                             for(int i = 1; i < ddata.length; i++) {
                                                 double val = ddata[i];
                                                 Field field = fields.get(i - 1);
+                                                MetaAxis fieldY;
                                                 if(field.onY2) {
-                                                    metaY2.updateMinMax(val);
+                                                    fieldY = metaY2;
                                                 } else {
-                                                    metaY.updateMinMax(val);
+                                                    fieldY = metaY;
                                                 }
+                                                if(fieldY.isLogscale()) {
+                                                    val = Math.log10(val);
+                                                }
+                                                fieldY.updateMinMax(val);
                                                 field.dataset.add(xVal, val);
                                             }
                                             metaX.updateMinMax(xVal);
