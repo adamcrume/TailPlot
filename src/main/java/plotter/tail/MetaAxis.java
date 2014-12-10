@@ -31,6 +31,8 @@ abstract class MetaAxis {
 
     private boolean logscale;
 
+    private double scrollWidth;
+
 
     public abstract List<DoubleData> getDatasets();
 
@@ -133,6 +135,10 @@ abstract class MetaAxis {
 
     public void commitMinMax() {
         if(min != Double.POSITIVE_INFINITY && isAutoscale()) {
+            double min = this.min;
+            if(scrollWidth != 0) {
+                min = max - scrollWidth;
+            }
             double margin = .1 * (max - min);
             axis.setStart(min - margin);
             axis.setEnd(max + margin);
@@ -210,4 +216,9 @@ abstract class MetaAxis {
 
 
     protected abstract void logscaleUpdated(boolean logscale);
+
+
+    public void setScrollWidth(double scrollWidth) {
+        this.scrollWidth = scrollWidth;
+    }
 }

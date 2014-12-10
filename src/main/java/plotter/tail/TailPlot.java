@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.regex.Pattern;
 
 import javax.swing.JButton;
@@ -64,7 +65,7 @@ public class TailPlot {
 
     private int x = -1;
 
-    private NumberFormat xInputFormat;
+    private NumberFormat xInputFormat = NumberFormat.getInstance();
 
     private XYFormat slopeFormat;
 
@@ -177,6 +178,7 @@ public class TailPlot {
         System.err.println("      --y2-format=FMT           display format of the Y2 axis. Example: time,YYY-MM-dd_HH:mm:ss to display as a timestamp (default: number)");
         System.err.println("  -h, --header-line             use the first line as a header line");
         System.err.println("  -t, --title=TITLE             set the window title (defaults to the file name)");
+        System.err.println("      --scroll-width=AMT        amount of data to keep on screen (in X axis units)");
         System.err.println("      --help                    display this message");
         System.err.println();
         System.err.println("Notes:");
@@ -193,6 +195,7 @@ public class TailPlot {
         boolean headerLine = false;
         String fieldString = null;
         String title = null;
+        String scrollWidthString = null;
         for(int i = 0; i < args.length; i++) {
             if(args[i].equals("-F")) {
                 fieldSeparator = Pattern.compile(args[++i]);
@@ -265,6 +268,8 @@ public class TailPlot {
                 title = args[++i];
             } else if(args[i].startsWith("--title=")) {
                 title = args[i].substring("--title=".length());
+            } else if(args[i].startsWith("--scroll-width=")) {
+                scrollWidthString = args[i].substring("--scroll-width=".length());
             } else if(args[i].equals("--help") || args[i].equals("-h")) {
                 usage(null);
             } else if(args[i].startsWith("-")) {
@@ -326,6 +331,13 @@ public class TailPlot {
         if(x != -1) {
             NumberFormat format = fieldFormats.get(x);
             xInputFormat = format == null ? NumberFormat.getInstance() : format;
+        }
+        if(scrollWidthString != null) {
+            try {
+                metaX.setScrollWidth(xInputFormat.parse(scrollWidthString).doubleValue());
+            } catch(ParseException e) {
+                System.err.println("Invalid X value for scroll width: " + scrollWidthString);
+            }
         }
         boolean restartable = file != null;
 
@@ -592,13 +604,21 @@ public class TailPlot {
     private NumberFormat parseFormat(String format) throws ParseException {
         NumberFormat fmt;
         if(format.equals("date")) {
-            fmt = new DateNumberFormat(DateFormat.getDateInstance());
+            DateFormat f = DateFormat.getDateInstance();
+            f.setTimeZone(TimeZone.getTimeZone("GMT"));
+            fmt = new DateNumberFormat(f);
         } else if(format.startsWith("date,")) {
-            fmt = new DateNumberFormat(new SimpleDateFormat(format.substring("date,".length())));
+            SimpleDateFormat f = new SimpleDateFormat(format.substring("date,".length()));
+            f.setTimeZone(TimeZone.getTimeZone("GMT"));
+            fmt = new DateNumberFormat(f);
         } else if(format.equals("time")) {
-            fmt = new DateNumberFormat(DateFormat.getTimeInstance());
+            DateFormat f = DateFormat.getTimeInstance();
+            f.setTimeZone(TimeZone.getTimeZone("GMT"));
+            fmt = new DateNumberFormat(f);
         } else if(format.startsWith("time,")) {
-            fmt = new DateNumberFormat(new SimpleDateFormat(format.substring("time,".length())));
+            SimpleDateFormat f = new SimpleDateFormat(format.substring("time,".length()));
+            f.setTimeZone(TimeZone.getTimeZone("GMT"));
+            fmt = new DateNumberFormat(f);
         } else if(format.equals("number")) {
             fmt = NumberFormat.getInstance();
         } else if(format.startsWith("number,")) {
