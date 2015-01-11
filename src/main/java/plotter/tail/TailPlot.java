@@ -147,6 +147,10 @@ public class TailPlot {
 
     private boolean restart;
 
+    private boolean headerLine;
+
+    private String title;
+
 
     public static void main(String[] args) {
         try {
@@ -191,10 +195,10 @@ public class TailPlot {
     }
 
 
-    public void run(String[] args) throws IOException {
-        boolean headerLine = false;
+    private void parseArgs(String[] args) {
+        headerLine = false;
         String fieldString = null;
-        String title = null;
+        title = null;
         String scrollWidthString = null;
         for(int i = 0; i < args.length; i++) {
             if(args[i].equals("-F")) {
@@ -339,6 +343,11 @@ public class TailPlot {
                 System.err.println("Invalid X value for scroll width: " + scrollWidthString);
             }
         }
+    }
+
+
+    public void run(String[] args) throws IOException {
+        parseArgs(args);
         boolean restartable = file != null;
 
         frame = new XYPlotFrame();
