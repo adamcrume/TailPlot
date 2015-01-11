@@ -89,7 +89,7 @@ public class TailPlot {
         public List<DoubleData> getDatasets() {
             List<DoubleData> datasets = new ArrayList<DoubleData>();
             for(Field f : fields) {
-                datasets.add(f.dataset.getXData());
+                datasets.add(f.getDataset().getXData());
             }
             return datasets;
         }
@@ -108,8 +108,8 @@ public class TailPlot {
         public List<DoubleData> getDatasets() {
             List<DoubleData> datasets = new ArrayList<DoubleData>();
             for(Field f : fields) {
-                if(!f.onY2) {
-                    datasets.add(f.dataset.getYData());
+                if(!f.isOnY2()) {
+                    datasets.add(f.getDataset().getYData());
                 }
             }
             return datasets;
@@ -129,8 +129,8 @@ public class TailPlot {
         public List<DoubleData> getDatasets() {
             List<DoubleData> datasets = new ArrayList<DoubleData>();
             for(Field f : fields) {
-                if(!f.onY2) {
-                    datasets.add(f.dataset.getYData());
+                if(!f.isOnY2()) {
+                    datasets.add(f.getDataset().getYData());
                 }
             }
             return datasets;
@@ -517,8 +517,8 @@ public class TailPlot {
             }
             try {
                 for(Field f : fields) {
-                    if(f.dataset != null) {
-                        f.dataset.removeAllPoints();
+                    if(f.getDataset() != null) {
+                        f.getDataset().removeAllPoints();
                     }
                 }
                 points = 0;
@@ -579,7 +579,7 @@ public class TailPlot {
                                                 double val = ddata[i];
                                                 Field field = fields.get(i - 1);
                                                 MetaAxis fieldY;
-                                                if(field.onY2) {
+                                                if(field.isOnY2()) {
                                                     fieldY = metaY2;
                                                 } else {
                                                     fieldY = metaY;
@@ -588,7 +588,7 @@ public class TailPlot {
                                                     val = Math.log10(val);
                                                 }
                                                 fieldY.updateMinMax(val);
-                                                field.dataset.add(xVal, val);
+                                                field.getDataset().add(xVal, val);
                                             }
                                             metaX.updateMinMax(xVal);
                                         }
@@ -670,16 +670,16 @@ public class TailPlot {
                 }
             }
 
-            if(fields.get(0).format == null) {
+            if(fields.get(0).getFormat() == null) {
                 assert fields.size() == selection.length;
                 for(int i = 0; i < selection.length; i++) {
                     NumberFormat format = fieldFormats.get(selection[i]);
-                    fields.get(i).format = format == null ? NumberFormat.getInstance() : format;
+                    fields.get(i).setFormat(format == null ? NumberFormat.getInstance() : format);
                 }
             }
 
             for(Field f : fields) {
-                final MultiplexingXYPlotLine pline = new MultiplexingXYPlotLine(xAxis, f.onY2 ? y2Axis : yAxis, XYDimension.X);
+                final MultiplexingXYPlotLine pline = new MultiplexingXYPlotLine(xAxis, f.isOnY2() ? y2Axis : yAxis, XYDimension.X);
                 Stroke highlightStroke = new BasicStroke(3);
                 Shape highlightPointFill = null;
                 Shape highlightPointOutline = null;
@@ -687,8 +687,8 @@ public class TailPlot {
                 SimpleXYDataset dataset = new SimpleXYDataset(pline);
                 dataset.setXData(pline.getXData());
                 dataset.setYData(pline.getYData());
-                frame.addPlotLine(f.name, pline, highlightStroke, highlightPointFill, highlightPointOutline);
-                f.dataset = dataset;
+                frame.addPlotLine(f.getName(), pline, highlightStroke, highlightPointFill, highlightPointOutline);
+                f.setDataset(dataset);
             }
             if(headerLine) {
                 return null;
@@ -714,9 +714,9 @@ public class TailPlot {
         }
         for(int i = 0; i < data2.length; i++) {
             try {
-                ddata[i + 1] = fields.get(i).format.parse(data2[i]).doubleValue();
+                ddata[i + 1] = fields.get(i).getFormat().parse(data2[i]).doubleValue();
             } catch(ParseException e) {
-                System.err.println("Invalid value on line " + lineNumber + " for \"" + fields.get(i).name
+                System.err.println("Invalid value on line " + lineNumber + " for \"" + fields.get(i).getName()
                         + "\": " + data2[i]);
                 ddata[i + 1] = Double.NaN;
             }
@@ -765,22 +765,5 @@ public class TailPlot {
             selection[i] = Integer.parseInt(data[i].trim());
         }
         return selection;
-    }
-
-
-    private class Field {
-        public SimpleXYDataset dataset;
-
-        private String name;
-
-        private boolean onY2;
-
-        public NumberFormat format;
-
-
-        public Field(String name, boolean onY2) {
-            this.name = name;
-            this.onY2 = onY2;
-        }
     }
 }
