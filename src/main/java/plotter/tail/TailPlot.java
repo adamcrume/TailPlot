@@ -30,6 +30,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -509,6 +510,7 @@ public class TailPlot {
                 }
             }
         });
+        xMarginSpinner.setModel(new SpinnerNumberModel(0, 0, Integer.MAX_VALUE, 1));
         xMarginLabel.setLabelFor(xMarginSpinner);
         settings.add(xMarginLabel, labelConstraints);
         settings.add(xMarginSpinner, constraints);
@@ -527,6 +529,7 @@ public class TailPlot {
                 }
             }
         });
+        yMarginSpinner.setModel(new SpinnerNumberModel(0, 0, Integer.MAX_VALUE, 1));
         yMarginLabel.setLabelFor(yMarginSpinner);
         settings.add(yMarginLabel, labelConstraints);
         settings.add(yMarginSpinner, constraints);
