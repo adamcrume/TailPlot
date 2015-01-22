@@ -493,6 +493,16 @@ public class TailPlot {
         autorestartCheckbox.setEnabled(restartable);
         settings.add(autorestartCheckbox, constraints);
 
+        final JCheckBox showLegendCheckbox = new JCheckBox("Show legend");
+        showLegendCheckbox.setSelected(true);
+        showLegendCheckbox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                frame.getLegend().setVisible(showLegendCheckbox.isSelected());
+            }
+        });
+        settings.add(showLegendCheckbox, constraints);
+
         JLabel xMarginLabel = new JLabel("Bottom margin:");
         final JSpinner xMarginSpinner = new JSpinner();
         xMarginSpinner.addChangeListener(new ChangeListener() {
