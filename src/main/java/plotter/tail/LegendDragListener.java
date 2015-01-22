@@ -16,6 +16,8 @@ import javax.swing.Spring;
 import javax.swing.SpringLayout;
 import javax.swing.SpringLayout.Constraints;
 import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 
 import plotter.Legend;
 
@@ -179,8 +181,10 @@ class LegendDragListener implements AWTEventListener {
         }
 
         // Hide borders on the sides that have been snapped to.
-        legend.setBorder(BorderFactory.createMatteBorder(snapTop ? 0 : 1, snapLeft ? 0 : 1, snapBottom ? 0 : 1,
-                snapRight ? 0 : 1, Color.darkGray));
+        Border outsideBorder = BorderFactory.createMatteBorder(snapTop ? 0 : 1, snapLeft ? 0 : 1, snapBottom ? 0 : 1,
+                snapRight ? 0 : 1, Color.darkGray);
+        Border insideBorder = ((CompoundBorder) legend.getBorder()).getInsideBorder();
+        legend.setBorder(BorderFactory.createCompoundBorder(outsideBorder, insideBorder));
     }
 
 

@@ -39,6 +39,8 @@ import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 import javax.swing.SpringLayout;
 import javax.swing.SwingConstants;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 
 import plotter.Legend;
 import plotter.LegendItem;
@@ -179,7 +181,9 @@ public class XYPlotFrame extends JFrame {
 			legend.setForeground(Color.white);
 			legend.setBackground(Color.black);
 			legend.setFont(new Font("Arial", 0, 12));
-			legend.setBorder(BorderFactory.createMatteBorder(0, 1, 1, 0, Color.darkGray));
+			Border outsideBorder = BorderFactory.createMatteBorder(0, 1, 1, 0, Color.darkGray);
+			Border insideBorder = BorderFactory.createLineBorder(Color.black, 5);
+			legend.setBorder(BorderFactory.createCompoundBorder(outsideBorder, insideBorder));
 			plot.add(legend, 0);
 		}
 
