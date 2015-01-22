@@ -37,6 +37,7 @@ import javax.swing.event.ChangeListener;
 
 import plotter.DateNumberFormat;
 import plotter.DoubleData;
+import plotter.Legend;
 import plotter.xy.LinearXYAxis;
 import plotter.xy.XYAxis;
 
@@ -491,6 +492,7 @@ public class TailPlot {
         autorestartCheckbox = new JCheckBox("Auto-restart if file shrinks");
         autorestartCheckbox.setSelected(restartable);
         autorestartCheckbox.setEnabled(restartable);
+        autorestartCheckbox.setToolTipText("Reload data if a file shrinks");
         settings.add(autorestartCheckbox, constraints);
 
         final JCheckBox showLegendCheckbox = new JCheckBox("Show legend");
@@ -501,6 +503,7 @@ public class TailPlot {
                 frame.getLegend().setVisible(showLegendCheckbox.isSelected());
             }
         });
+        showLegendCheckbox.setToolTipText("Display the plot legend");
         settings.add(showLegendCheckbox, constraints);
 
         JLabel xMarginLabel = new JLabel("Bottom margin:");
@@ -522,6 +525,7 @@ public class TailPlot {
             }
         });
         xMarginSpinner.setModel(new SpinnerNumberModel(0, 0, Integer.MAX_VALUE, 1));
+        xMarginSpinner.setToolTipText("Number of pixels below the main plot area");
         xMarginLabel.setLabelFor(xMarginSpinner);
         settings.add(xMarginLabel, labelConstraints);
         settings.add(xMarginSpinner, constraints);
@@ -541,6 +545,7 @@ public class TailPlot {
             }
         });
         yMarginSpinner.setModel(new SpinnerNumberModel(0, 0, Integer.MAX_VALUE, 1));
+        yMarginSpinner.setToolTipText("Number of pixels to the left of the main plot area");
         yMarginLabel.setLabelFor(yMarginSpinner);
         settings.add(yMarginLabel, labelConstraints);
         settings.add(yMarginSpinner, constraints);
@@ -563,6 +568,7 @@ public class TailPlot {
                     }
                 }
             });
+            y2MarginSpinner.setToolTipText("Number of pixels to the right of the main plot area");
             y2MarginLabel.setLabelFor(y2MarginSpinner);
             settings.add(y2MarginLabel, labelConstraints);
             settings.add(y2MarginSpinner, constraints);
@@ -578,6 +584,7 @@ public class TailPlot {
                 }
             }
         });
+        restartButton.setToolTipText("Reload data from file(s)");
         settings.add(restartButton, constraints);
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, settings, content);
         splitPane.setOneTouchExpandable(true);
@@ -598,6 +605,12 @@ public class TailPlot {
         metaX.setAxis(xAxis);
         metaY.setAxis(yAxis);
         metaY2.setAxis(y2Axis);
+        String axisToolTipText = "Shift-drag to move/translate, ctrl-drag to scale, click and hold to display marker line";
+        xAxis.setToolTipText(axisToolTipText);
+        yAxis.setToolTipText(axisToolTipText);
+        if(useY2) {
+            y2Axis.setToolTipText(axisToolTipText);
+        }
 
         MessageFormat innerSlopeFormat = new MessageFormat("<html><b>&Delta;x:</b> {0}  <b>&Delta;y:</b> {1}</html>");
         MessageFormat innerLocationFormat = new MessageFormat("<html><b>X:</b> {0} &nbsp; <b>Y:</b> {1}</html>");
@@ -643,9 +656,11 @@ public class TailPlot {
             }
         };
 
+        Legend legend = frame.getLegend();
         frame.getToolkit().addAWTEventListener(
-                new LegendDragListener(frame.getLegend(), frame.getContents(), frame.getPlot()),
+                new LegendDragListener(legend, frame.getContents(), frame.getPlot()),
                 AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
+        legend.setToolTipText("Shift-drag to move legend");
 
         frame.setSize(400, 300);
         frame.setVisible(true);

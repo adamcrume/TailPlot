@@ -40,6 +40,7 @@ abstract class MetaAxis {
     public JCheckBox createAutoscaleCheckbox(String label) {
         autoScaleCheckBox = new JCheckBox(label);
         autoScaleCheckBox.setSelected(true);
+        autoScaleCheckBox.setToolTipText("Automatically scale axis to fit data");
         return autoScaleCheckBox;
     }
 
@@ -52,6 +53,7 @@ abstract class MetaAxis {
                 setLogscale(checkbox.isSelected());
             }
         });
+        checkbox.setToolTipText("Use logarithmic scaling");
         return checkbox;
     }
 
