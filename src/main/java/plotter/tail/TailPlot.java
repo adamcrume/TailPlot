@@ -1,5 +1,6 @@
 package plotter.tail;
 
+import java.awt.AWTEvent;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -631,6 +632,10 @@ public class TailPlot {
                 throw new UnsupportedOperationException();
             }
         };
+
+        frame.getToolkit().addAWTEventListener(
+                new LegendDragListener(frame.getLegend(), frame.getContents(), frame.getPlot()),
+                AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
 
         frame.setSize(400, 300);
         frame.setVisible(true);
