@@ -34,6 +34,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
@@ -89,6 +91,10 @@ public class XYPlotFrame extends JFrame {
 	private boolean useY2;
 
 	private boolean useGrid2;
+
+	/** Listeners to be notified when an axis is panned or zoomed. */
+	private List<AxisListener> axisListeners = new ArrayList<AxisListener>();
+
 
 	public void setup() {
 		setup(getContentPane());
@@ -362,6 +368,15 @@ public class XYPlotFrame extends JFrame {
     }
 
 
+    /**
+     * Adds a listener for axis manipulation events.
+     * @param listener listener to notify when the axis is panned or zoomed
+     */
+    public void addAxisListener(AxisListener listener) {
+        axisListeners.add(listener);
+    }
+
+
     private static class MarkerListener implements MouseListener, MouseMotionListener {
         private static final int MASK = InputEvent.ALT_DOWN_MASK | InputEvent.ALT_GRAPH_DOWN_MASK
                 | InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK;
@@ -441,7 +456,7 @@ public class XYPlotFrame extends JFrame {
     }
 
 
-    private static class DragListener implements MouseListener, MouseMotionListener {
+    private class DragListener implements MouseListener, MouseMotionListener {
         private static final int MASK = InputEvent.ALT_DOWN_MASK | InputEvent.ALT_GRAPH_DOWN_MASK
                 | InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK;
 
@@ -506,6 +521,9 @@ public class XYPlotFrame extends JFrame {
                 double logicalPos = axis.toLogical(physicalPos);
                 axis.shift(logicalAnchor - logicalPos);
                 contents.repaint(); // TODO: Should the Axis.shift method handle this?
+                for(AxisListener listener : axisListeners) {
+                    listener.axisPanned(axis);
+                }
             }
         }
 
@@ -516,7 +534,7 @@ public class XYPlotFrame extends JFrame {
     }
 
 
-    private static class ScaleListener implements MouseListener, MouseMotionListener {
+    private class ScaleListener implements MouseListener, MouseMotionListener {
         private static final int MASK = InputEvent.ALT_DOWN_MASK | InputEvent.ALT_GRAPH_DOWN_MASK
                 | InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK;
 
@@ -586,6 +604,9 @@ public class XYPlotFrame extends JFrame {
                 axis.setStart(scale * (axis.getStart() - midpoint) + midpoint);
                 axis.setEnd(scale * (axis.getEnd() - midpoint) + midpoint);
                 contents.repaint(); // TODO: Should the Axis.setStart and Axis.setEnd methods handle this?
+                for(AxisListener listener : axisListeners) {
+                    listener.axisZoomed(axis);
+                }
             }
         }
 
@@ -593,5 +614,24 @@ public class XYPlotFrame extends JFrame {
         @Override
         public void mouseMoved(MouseEvent e) {
         }
+    }
+
+
+    /**
+     * Gets notified when an axis is manipulated.
+     */
+    static interface AxisListener {
+        /**
+         * Invoked when the axis is panned.
+         * @param axis the axis that was panned
+         */
+        void axisPanned(XYAxis axis);
+
+
+        /**
+         * Invoked when the axis is zoomed.
+         * @param axis the axis that was zoomed
+         */
+        void axisZoomed(XYAxis axis);
     }
 }

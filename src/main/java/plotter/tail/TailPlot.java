@@ -38,6 +38,7 @@ import javax.swing.event.ChangeListener;
 import plotter.DateNumberFormat;
 import plotter.DoubleData;
 import plotter.Legend;
+import plotter.tail.XYPlotFrame.AxisListener;
 import plotter.xy.LinearXYAxis;
 import plotter.xy.XYAxis;
 
@@ -479,11 +480,34 @@ public class TailPlot {
         labelConstraints.gridwidth = 1;
         labelConstraints.insets = new Insets(0, 0, 0, 5);
         labelConstraints.anchor = GridBagConstraints.LINE_START;
-        settings.add(metaX.createAutoscaleCheckbox("Auto-scale X axis"), constraints);
-        settings.add(metaY.createAutoscaleCheckbox("Auto-scale Y axis"), constraints);
+        final JCheckBox autoscaleXCheckbox = metaX.createAutoscaleCheckbox("Auto-scale X axis");
+        settings.add(autoscaleXCheckbox, constraints);
+        final JCheckBox autoscaleYCheckbox = metaY.createAutoscaleCheckbox("Auto-scale Y axis");
+        settings.add(autoscaleYCheckbox, constraints);
+        JCheckBox autoscaleY2Checkbox = null;
         if(useY2) {
-            settings.add(metaY2.createAutoscaleCheckbox("Auto-scale Y2 axis"), constraints);
+            autoscaleY2Checkbox = metaY2.createAutoscaleCheckbox("Auto-scale Y2 axis");
+            settings.add(autoscaleY2Checkbox, constraints);
         }
+        final JCheckBox _autoscaleY2Checkbox = autoscaleY2Checkbox;
+        frame.addAxisListener(new AxisListener() {
+            @Override
+            public void axisZoomed(XYAxis axis) {
+                if(axis == xAxis) {
+                    autoscaleXCheckbox.setSelected(false);
+                } else if(axis == yAxis) {
+                    autoscaleYCheckbox.setSelected(false);
+                } else if(axis == y2Axis) {
+                    _autoscaleY2Checkbox.setSelected(false);
+                }
+            }
+
+
+            @Override
+            public void axisPanned(XYAxis axis) {
+                axisZoomed(axis);
+            }
+        });
         settings.add(metaX.createLogscaleCheckbox("Logarithmic X axis"), constraints);
         settings.add(metaY.createLogscaleCheckbox("Logarithmic Y axis"), constraints);
         if(useY2) {
