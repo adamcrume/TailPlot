@@ -39,6 +39,20 @@ class MultiscaleNumberFormat extends NumberFormat {
 
     @Override
     public Number parse(String source, ParsePosition parsePosition) {
-        throw new IllegalArgumentException("not implemented");
+        ParsePosition tmp = new ParsePosition(parsePosition.getIndex());
+        tmp.setErrorIndex(parsePosition.getErrorIndex());
+        Number n = plainFormat.parse(source, tmp);
+        if(tmp.getErrorIndex() == -1 && tmp.getIndex() == source.length()) {
+            parsePosition.setIndex(tmp.getIndex());
+            parsePosition.setErrorIndex(tmp.getErrorIndex());
+            return n;
+        } else {
+            tmp.setIndex(parsePosition.getIndex());
+            tmp.setErrorIndex(parsePosition.getErrorIndex());
+            n = exponentialFormat.parse(source, tmp);
+            parsePosition.setIndex(tmp.getIndex());
+            parsePosition.setErrorIndex(tmp.getErrorIndex());
+            return n;
+        }
     }
 }
