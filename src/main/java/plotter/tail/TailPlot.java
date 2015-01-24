@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -38,7 +39,6 @@ import javax.swing.event.ChangeListener;
 import plotter.DateNumberFormat;
 import plotter.DoubleData;
 import plotter.Legend;
-import plotter.tail.XYPlotFrame.AxisListener;
 import plotter.xy.LinearXYAxis;
 import plotter.xy.XYAxis;
 
@@ -480,39 +480,60 @@ public class TailPlot {
         labelConstraints.gridwidth = 1;
         labelConstraints.insets = new Insets(0, 0, 0, 5);
         labelConstraints.anchor = GridBagConstraints.LINE_START;
-        final JCheckBox autoscaleXCheckbox = metaX.createAutoscaleCheckbox("Auto-scale X axis");
-        settings.add(autoscaleXCheckbox, constraints);
-        final JCheckBox autoscaleYCheckbox = metaY.createAutoscaleCheckbox("Auto-scale Y axis");
-        settings.add(autoscaleYCheckbox, constraints);
-        JCheckBox autoscaleY2Checkbox = null;
+        settings.add(metaX.createAutoscaleCheckbox("Auto-scale X axis"), constraints);
+        settings.add(metaY.createAutoscaleCheckbox("Auto-scale Y axis"), constraints);
         if(useY2) {
-            autoscaleY2Checkbox = metaY2.createAutoscaleCheckbox("Auto-scale Y2 axis");
-            settings.add(autoscaleY2Checkbox, constraints);
+            settings.add(metaY2.createAutoscaleCheckbox("Auto-scale Y2 axis"), constraints);
         }
-        final JCheckBox _autoscaleY2Checkbox = autoscaleY2Checkbox;
-        frame.addAxisListener(new AxisListener() {
-            @Override
-            public void axisZoomed(XYAxis axis) {
-                if(axis == xAxis) {
-                    autoscaleXCheckbox.setSelected(false);
-                } else if(axis == yAxis) {
-                    autoscaleYCheckbox.setSelected(false);
-                } else if(axis == y2Axis) {
-                    _autoscaleY2Checkbox.setSelected(false);
-                }
-            }
-
-
-            @Override
-            public void axisPanned(XYAxis axis) {
-                axisZoomed(axis);
-            }
-        });
+        frame.addAxisListener(metaX);
+        frame.addAxisListener(metaY);
+        if(useY2) {
+            frame.addAxisListener(metaY2);
+        }
         settings.add(metaX.createLogscaleCheckbox("Logarithmic X axis"), constraints);
         settings.add(metaY.createLogscaleCheckbox("Logarithmic Y axis"), constraints);
         if(useY2) {
             settings.add(metaY2.createLogscaleCheckbox("Logarithmic Y2 axis"), constraints);
         }
+
+        JLabel xminLabel = new JLabel("X minimum:");
+        JFormattedTextField xminText = metaX.createMinTextField();
+        xminLabel.setLabelFor(xminText);
+        settings.add(xminLabel, labelConstraints);
+        settings.add(xminText, constraints);
+
+        JLabel xmaxLabel = new JLabel("X maximum:");
+        JFormattedTextField xmaxText = metaX.createMaxTextField();
+        xmaxLabel.setLabelFor(xmaxText);
+        settings.add(xmaxLabel, labelConstraints);
+        settings.add(xmaxText, constraints);
+
+        JLabel yminLabel = new JLabel("Y minimum:");
+        JFormattedTextField yminText = metaY.createMinTextField();
+        yminLabel.setLabelFor(yminText);
+        settings.add(yminLabel, labelConstraints);
+        settings.add(yminText, constraints);
+
+        JLabel ymaxLabel = new JLabel("Y maximum:");
+        JFormattedTextField ymaxText = metaY.createMaxTextField();
+        ymaxLabel.setLabelFor(ymaxText);
+        settings.add(ymaxLabel, labelConstraints);
+        settings.add(ymaxText, constraints);
+
+        if(useY2) {
+            JLabel y2minLabel = new JLabel("Y2 minimum:");
+            JFormattedTextField y2minText = metaY2.createMinTextField();
+            y2minLabel.setLabelFor(y2minText);
+            settings.add(y2minLabel, labelConstraints);
+            settings.add(y2minText, constraints);
+
+            JLabel y2maxLabel = new JLabel("Y2 maximum:");
+            JFormattedTextField y2maxText = metaY2.createMaxTextField();
+            y2maxLabel.setLabelFor(y2maxText);
+            settings.add(y2maxLabel, labelConstraints);
+            settings.add(y2maxText, constraints);
+        }
+
         autorestartCheckbox = new JCheckBox("Auto-restart if file shrinks");
         autorestartCheckbox.setSelected(restartable);
         autorestartCheckbox.setEnabled(restartable);

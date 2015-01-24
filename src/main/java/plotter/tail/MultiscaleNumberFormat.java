@@ -15,6 +15,19 @@ class MultiscaleNumberFormat extends NumberFormat {
     private double lowerThreshold = .01;
 
 
+    public MultiscaleNumberFormat() {
+    }
+
+
+    public MultiscaleNumberFormat(NumberFormat plainFormat, NumberFormat exponentialFormat, double lowerThreshold,
+            double upperThreshold) {
+        this.plainFormat = plainFormat;
+        this.exponentialFormat = exponentialFormat;
+        this.lowerThreshold = lowerThreshold;
+        this.upperThreshold = upperThreshold;
+    }
+
+
     @Override
     public StringBuffer format(double number, StringBuffer toAppendTo, FieldPosition pos) {
         double mag = Math.abs(number);
