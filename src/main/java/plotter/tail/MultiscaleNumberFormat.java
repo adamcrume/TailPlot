@@ -5,7 +5,7 @@ import java.text.FieldPosition;
 import java.text.NumberFormat;
 import java.text.ParsePosition;
 
-class DefaultAxisFormat extends NumberFormat {
+class MultiscaleNumberFormat extends NumberFormat {
     private NumberFormat plainFormat = new DecimalFormat("#.###");
 
     private NumberFormat exponentialFormat = new DecimalFormat("0.###E0");

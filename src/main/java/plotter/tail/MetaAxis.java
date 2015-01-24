@@ -18,7 +18,7 @@ import plotter.xy.XYAxis;
 abstract class MetaAxis {
     private XYAxis axis;
 
-    private NumberFormat format = new DefaultAxisFormat();
+    private NumberFormat format = new MultiscaleNumberFormat();
 
     // Only access from the Swing thread
     private double min;
