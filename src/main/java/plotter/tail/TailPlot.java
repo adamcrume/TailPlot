@@ -613,6 +613,7 @@ public class TailPlot {
                     }
                 }
             });
+            y2MarginSpinner.setModel(new SpinnerNumberModel(0, 0, Integer.MAX_VALUE, 1));
             y2MarginSpinner.setToolTipText("Number of pixels to the right of the main plot area");
             y2MarginLabel.setLabelFor(y2MarginSpinner);
             settings.add(y2MarginLabel, labelConstraints);
