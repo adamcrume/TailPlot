@@ -91,6 +91,12 @@ abstract class MetaAxis implements AxisListener {
         autoScaleCheckBox = new JCheckBox(label);
         autoScaleCheckBox.setSelected(true);
         autoScaleCheckBox.setToolTipText("Automatically scale axis to fit data");
+        autoScaleCheckBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                commitMinMax();
+            }
+        });
         return autoScaleCheckBox;
     }
 
