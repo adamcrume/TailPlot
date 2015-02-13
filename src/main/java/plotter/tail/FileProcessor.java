@@ -132,9 +132,11 @@ class FileProcessor implements Runnable {
                                         if(isXLogscale) {
                                             xVal = Math.log10(xVal);
                                         }
+                                        boolean anyVisible = false;
                                         for(int i = 1; i < ddata.length; i++) {
                                             double val = ddata[i];
                                             Field field = dataFile.getFields().get(i - 1);
+                                            boolean visible = field.isVisible();
                                             MetaAxis fieldY;
                                             if(field.isOnY2()) {
                                                 fieldY = tailPlot.getMetaY2();
@@ -144,10 +146,15 @@ class FileProcessor implements Runnable {
                                             if(fieldY.isLogscale()) {
                                                 val = Math.log10(val);
                                             }
-                                            fieldY.updateMinMax(val);
+                                            if(visible) {
+                                                fieldY.updateMinMax(val);
+                                                anyVisible = true;
+                                            }
                                             field.getDataset().add(xVal, val);
                                         }
-                                        metaX.updateMinMax(xVal);
+                                        if(anyVisible) {
+                                            metaX.updateMinMax(xVal);
+                                        }
                                     }
                                     buffer.clear();
                                 }

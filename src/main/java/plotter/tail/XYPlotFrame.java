@@ -236,11 +236,12 @@ public class XYPlotFrame extends JFrame {
 	}
 
 
-	public void addPlotLine(String description, final XYPlotLine plotLine, final Stroke highlightStroke, final Shape highlightPointFill, final Shape highlightPointOutline) {
+	public LegendItem addPlotLine(String description, final XYPlotLine plotLine, final Stroke highlightStroke, final Shape highlightPointFill, final Shape highlightPointOutline) {
 		contents.add(plotLine);
 		contents.setComponentZOrder(grid, contents.getComponentCount() - 1);
+		final LegendItem item;
 		if(description != null && legend != null) {
-			final LegendItem item = new LegendItem(description, plotLine, null, SwingConstants.LEFT);
+			item = new LegendItem(description, plotLine, null, SwingConstants.LEFT);
 			item.addMouseListener(new MouseAdapter() {
 				Stroke originalStroke;
 				Shape originalPointFill;
@@ -267,10 +268,13 @@ public class XYPlotFrame extends JFrame {
 				}
 			});
 			legend.add(item);
+		} else {
+		    item = null;
 		}
 		if(grid2 != null) {
 			contents.setComponentZOrder(grid2, contents.getComponentCount() - 1);
 		}
+		return item;
 	}
 
 

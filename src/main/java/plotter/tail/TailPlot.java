@@ -19,8 +19,10 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
 
@@ -32,14 +34,22 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
+import javax.swing.JTable;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 
 import plotter.DateNumberFormat;
 import plotter.DoubleData;
 import plotter.Legend;
+import plotter.LegendItem;
 import plotter.xy.LinearXYAxis;
+import plotter.xy.SimpleXYDataset;
 import plotter.xy.XYAxis;
 
 public class TailPlot {
@@ -126,6 +136,15 @@ public class TailPlot {
     private String title;
 
     private JCheckBox autorestartCheckbox;
+
+    /** Editable table with the plotted fields listed. */
+    private JTable linesTable;
+
+    /** The plot lines. */
+    private List<MultiplexingXYPlotLine> plotLines = new ArrayList<MultiplexingXYPlotLine>();
+
+    /** Visible legend entries, keyed by plot line. */
+    private Map<MultiplexingXYPlotLine, LegendItem> legendItems = new HashMap<MultiplexingXYPlotLine, LegendItem>();
 
 
     public static void main(String[] args) {
@@ -632,6 +651,52 @@ public class TailPlot {
         });
         restartButton.setToolTipText("Reload data from file(s)");
         settings.add(restartButton, constraints);
+
+        JLabel linesTableLabel = new JLabel("Plot lines:");
+        final DefaultTableModel tableModel = new DefaultTableModel(new String[] { "Name", "Visible" }, 0) {
+            Class[] columnClasses = new Class[] { String.class, Boolean.class };
+
+
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                return columnClasses[columnIndex];
+            }
+        };
+        tableModel.addTableModelListener(new TableModelListener() {
+            @Override
+            public void tableChanged(TableModelEvent e) {
+                if(e.getType() == TableModelEvent.UPDATE) {
+                    assert e.getFirstRow() == e.getLastRow();
+                    int row = e.getFirstRow();
+                    int col = e.getColumn();
+                    MultiplexingXYPlotLine pline = plotLines.get(row);
+                    Legend legend = frame.getLegend();
+                    LegendItem item = legendItems.get(pline);
+                    if(col == 0) {
+                        String name = (String) tableModel.getValueAt(row, col);
+                        item.setDescription(name);
+                    } else {
+                        assert col == 1;
+                        boolean visible = (Boolean) tableModel.getValueAt(row, col);
+                        pline.setVisible(visible);
+                        if(visible) {
+                            legend.add(item);
+                        } else {
+                            legend.remove(item);
+                        }
+                        legend.revalidate();
+                        resetMinMax();
+                    }
+                }
+            }
+        });
+        linesTable = new JTable(tableModel);
+        linesTableLabel.setLabelFor(linesTable);
+        settings.add(linesTableLabel, constraints); // note that we don't use labelConstraints, because it should be on its own line
+        JTableHeader linesTableHeader = linesTable.getTableHeader();
+        settings.add(linesTableHeader, constraints);
+        settings.add(linesTable, constraints);
+
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, settings, content);
         splitPane.setOneTouchExpandable(true);
         splitPane.setDividerLocation(0);
@@ -758,7 +823,17 @@ public class TailPlot {
 
     void addPlotLine(String name, MultiplexingXYPlotLine pline, Stroke highlightStroke, Shape highlightPointFill,
             Shape highlightPointOutline) {
-        frame.addPlotLine(name, pline, highlightStroke, highlightPointFill, highlightPointOutline);
+        assert SwingUtilities.isEventDispatchThread();
+        plotLines.add(pline);
+
+        LegendItem item = frame.addPlotLine(name, pline, highlightStroke, highlightPointFill, highlightPointOutline);
+        legendItems.put(pline, item);
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.gridwidth = GridBagConstraints.REMAINDER;
+        constraints.weightx = 1.0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+
+        ((DefaultTableModel) linesTable.getModel()).addRow(new Object[] { name, true });
     }
 
 
@@ -786,6 +861,29 @@ public class TailPlot {
         metaY.resetMinMax();
         metaY2.resetMinMax();
         metaX.resetMinMax();
+        for(DataFile dataFile : dataFiles) {
+            for(Field field : dataFile.getFields()) {
+                if(field.isVisible()) {
+                    SimpleXYDataset dataset = field.getDataset();
+                    if(dataset != null && dataset.getPointCount() > 0) {
+                        // It's important to check for an empty data set because
+                        // an empty one will return infinities for the min and max.
+                        double minX = dataset.getMinX();
+                        double maxX = dataset.getMaxX();
+                        double minY = dataset.getMinY();
+                        double maxY = dataset.getMaxY();
+                        metaX.updateMinMax(minX);
+                        metaX.updateMinMax(maxX);
+                        MetaAxis y = field.isOnY2() ? metaY2 : metaY;
+                        y.updateMinMax(minY);
+                        y.updateMinMax(maxY);
+                    }
+                }
+            }
+        }
+        metaX.commitMinMax();
+        metaY.commitMinMax();
+        metaY2.commitMinMax();
     }
 
 

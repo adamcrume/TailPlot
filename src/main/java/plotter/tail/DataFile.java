@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import javax.swing.SwingUtilities;
+
 import plotter.xy.SimpleXYDataset;
 import plotter.xy.XYDimension;
 
@@ -118,19 +120,24 @@ class DataFile {
                 }
             }
 
-            for(Field f : fields) {
+            for(final Field f : fields) {
                 final MultiplexingXYPlotLine pline = new MultiplexingXYPlotLine(tailPlot.getXAxis(),
                         f.isOnY2() ? tailPlot.getY2Axis() : tailPlot.getYAxis(), XYDimension.X);
-                Stroke highlightStroke = new BasicStroke(3);
-                Shape highlightPointFill = null;
-                Shape highlightPointOutline = null;
+                final Stroke highlightStroke = new BasicStroke(3);
+                final Shape highlightPointFill = null;
+                final Shape highlightPointOutline = null;
                 pline.setForeground(tailPlot.nextColor());
                 SimpleXYDataset dataset = new SimpleXYDataset(pline);
                 dataset.setXData(pline.getXData());
                 dataset.setYData(pline.getYData());
-                tailPlot.addPlotLine(f.getName(), pline, highlightStroke, highlightPointFill,
-                        highlightPointOutline);
+                SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        tailPlot.addPlotLine(f.getName(), pline, highlightStroke, highlightPointFill,
+                                highlightPointOutline);
+                    }
+                });
                 f.setDataset(dataset);
+                f.setPlotLine(pline);
             }
             if(headerLine) {
                 return null;
