@@ -438,6 +438,7 @@ public class TailPlot {
             } else {
                 dataFile = new DataFile(this);
                 dataFile.setFile(new File(args[i]));
+                dataFile.setIndex(dataFiles.size());
                 dataFiles.add(dataFile);
             }
         }

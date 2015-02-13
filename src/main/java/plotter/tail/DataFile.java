@@ -71,6 +71,9 @@ class DataFile {
     /** Current processor for the file. */
     private FileProcessor processor;
 
+    /** Index within the files being plotted. */
+    private int index;
+
 
     /**
      * Creates an unconfigured DataFile.
@@ -101,6 +104,8 @@ class DataFile {
                     String name;
                     if(headerLine) {
                         name = data2[i];
+                    } else if(index > 0) {
+                        name = "Column " + (i + 1) + "(file " + (index + 1) + ")";
                     } else {
                         name = "Column " + (i + 1);
                     }
@@ -405,5 +410,14 @@ class DataFile {
      */
     public void setFieldString(String fieldString) {
         this.fieldString = fieldString;
+    }
+
+
+    /**
+     * Sets the index within the files being plotted.
+     * @param index index within the files being plotted
+     */
+    public void setIndex(int index) {
+        this.index = index;
     }
 }
