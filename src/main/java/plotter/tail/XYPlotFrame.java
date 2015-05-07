@@ -105,8 +105,8 @@ public class XYPlotFrame extends JFrame {
 		plot = new XYPlot();
 		xAxis = createXAxis();
 		yAxis = createYAxis();
-		xAxis.setPreferredSize(new Dimension(1, 40));
-		yAxis.setPreferredSize(new Dimension(40, 1));
+		xAxis.setPreferredSize(new Dimension(1, 30));
+		yAxis.setPreferredSize(new Dimension(50, 1));
 		xAxis.setForeground(Color.white);
 		yAxis.setForeground(Color.white);
 		xAxis.setTextMargin(10);
@@ -118,7 +118,7 @@ public class XYPlotFrame extends JFrame {
 		if(useX2) {
 			x2Axis = createX2Axis();
 			x2Axis.setMirrored(true);
-			x2Axis.setPreferredSize(new Dimension(1, 40));
+			x2Axis.setPreferredSize(new Dimension(1, 30));
 			x2Axis.setForeground(Color.white);
 			x2Axis.setTextMargin(10);
 			plot.add(x2Axis);
@@ -127,7 +127,7 @@ public class XYPlotFrame extends JFrame {
 		if(useY2) {
 			y2Axis = createY2Axis();
 			y2Axis.setMirrored(true);
-			y2Axis.setPreferredSize(new Dimension(40, 1));
+			y2Axis.setPreferredSize(new Dimension(50, 1));
 			y2Axis.setForeground(Color.white);
 			y2Axis.setTextMargin(10);
 			plot.add(y2Axis);
