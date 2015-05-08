@@ -181,4 +181,16 @@ public class MultiplexingXYPlotLine extends XYPlotLine {
         super.setPointOutline(pointOutline);
         delegate.setPointOutline(pointOutline);
     }
+
+
+    @Override
+    public XYAxis getXAxis() {
+        return xAxis;
+    }
+
+
+    @Override
+    public XYAxis getYAxis() {
+        return yAxis;
+    };
 }
