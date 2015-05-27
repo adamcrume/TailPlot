@@ -270,7 +270,14 @@ abstract class MetaAxis implements AxisListener {
         }
         minTextAutomaticallyUpdated = false;
         maxTextAutomaticallyUpdated = false;
+        minMaxUpdated();
     }
+
+
+    /**
+     * Called when the min/max are automatically udpated.
+     */
+    protected abstract void minMaxUpdated();
 
 
     public boolean isAutoscale() {

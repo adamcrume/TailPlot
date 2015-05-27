@@ -106,6 +106,12 @@ public class TailPlot {
             slopeFormat.setLogX(logscale);
             frame.getPlot().repaint();
         }
+
+
+        @Override
+        protected void minMaxUpdated() {
+            frame.getPlot().repaint();
+        }
     };
 
     private MetaAxis metaY = new MetaAxis() {
@@ -132,6 +138,12 @@ public class TailPlot {
             slopeFormat.setLogY(logscale);
             frame.getPlot().repaint();
         }
+
+
+        @Override
+        protected void minMaxUpdated() {
+            frame.getPlot().repaint();
+        }
     };
 
     private MetaAxis metaY2 = new MetaAxis() {
@@ -154,6 +166,12 @@ public class TailPlot {
 
         @Override
         protected void logscaleUpdated(boolean logscale) {
+            frame.getPlot().repaint();
+        }
+
+
+        @Override
+        protected void minMaxUpdated() {
             frame.getPlot().repaint();
         }
     };
