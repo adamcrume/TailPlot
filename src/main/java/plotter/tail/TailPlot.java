@@ -90,7 +90,10 @@ public class TailPlot {
             List<DoubleData> datasets = new ArrayList<DoubleData>();
             for(DataFile dataFile : dataFiles) {
                 for(Field f : dataFile.getFields()) {
-                    datasets.add(f.getDataset().getXData());
+                    SimpleXYDataset dataset = f.getDataset();
+                    if(dataset != null) {
+                        datasets.add(dataset.getXData());
+                    }
                 }
             }
             return datasets;
@@ -112,7 +115,10 @@ public class TailPlot {
             for(DataFile dataFile : dataFiles) {
                 for(Field f : dataFile.getFields()) {
                     if(!f.isOnY2()) {
-                        datasets.add(f.getDataset().getYData());
+                        SimpleXYDataset dataset = f.getDataset();
+                        if(dataset != null) {
+                            datasets.add(dataset.getYData());
+                        }
                     }
                 }
             }
@@ -135,7 +141,10 @@ public class TailPlot {
             for(DataFile dataFile : dataFiles) {
                 for(Field f : dataFile.getFields()) {
                     if(!f.isOnY2()) {
-                        datasets.add(f.getDataset().getYData());
+                        SimpleXYDataset dataset = f.getDataset();
+                        if(dataset != null) {
+                            datasets.add(dataset.getYData());
+                        }
                     }
                 }
             }
