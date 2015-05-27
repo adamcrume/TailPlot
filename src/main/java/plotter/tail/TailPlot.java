@@ -140,7 +140,7 @@ public class TailPlot {
             List<DoubleData> datasets = new ArrayList<DoubleData>();
             for(DataFile dataFile : dataFiles) {
                 for(Field f : dataFile.getFields()) {
-                    if(!f.isOnY2()) {
+                    if(f.isOnY2()) {
                         SimpleXYDataset dataset = f.getDataset();
                         if(dataset != null) {
                             datasets.add(dataset.getYData());
