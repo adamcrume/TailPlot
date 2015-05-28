@@ -65,6 +65,15 @@ class Field {
     }
 
 
+    /**
+     * Sets the field's name.
+     * @param name the new name
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+
     public boolean isOnY2() {
         return onY2;
     }

@@ -236,7 +236,9 @@ public class XYPlotFrame extends JFrame {
 	}
 
 
-	public LegendItem addPlotLine(String description, final XYPlotLine plotLine, final Stroke highlightStroke, final Shape highlightPointFill, final Shape highlightPointOutline) {
+	public LegendItem addPlotLine(Field field, final Stroke highlightStroke, final Shape highlightPointFill, final Shape highlightPointOutline) {
+		String description = field.getName();
+		final XYPlotLine plotLine = field.getPlotLine();
 		contents.add(plotLine);
 		contents.setComponentZOrder(grid, contents.getComponentCount() - 1);
 		final LegendItem item;

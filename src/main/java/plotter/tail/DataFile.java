@@ -151,14 +151,13 @@ class DataFile {
                 SimpleXYDataset dataset = new SimpleXYDataset(pline);
                 dataset.setXData(pline.getXData());
                 dataset.setYData(pline.getYData());
-                SwingUtilities.invokeLater(new Runnable() {
-                    public void run() {
-                        tailPlot.addPlotLine(f.getName(), pline, highlightStroke, highlightPointFill,
-                                highlightPointOutline);
-                    }
-                });
                 f.setDataset(dataset);
                 f.setPlotLine(pline);
+                SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        tailPlot.addPlotLine(f, pline, highlightStroke, highlightPointFill, highlightPointOutline);
+                    }
+                });
             }
             if(headerLine) {
                 return null;

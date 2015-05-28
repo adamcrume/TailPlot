@@ -67,6 +67,7 @@ import plotter.LegendItem;
 import plotter.xy.LinearXYAxis;
 import plotter.xy.SimpleXYDataset;
 import plotter.xy.XYAxis;
+import plotter.xy.XYPlotLine;
 
 public class TailPlot {
     private List<DataFile> dataFiles = new ArrayList<DataFile>();
@@ -183,8 +184,8 @@ public class TailPlot {
     /** Editable table with the plotted fields listed. */
     private JTable linesTable;
 
-    /** The plot lines. */
-    private List<MultiplexingXYPlotLine> plotLines = new ArrayList<MultiplexingXYPlotLine>();
+    /** The fields. */
+    private List<Field> fields = new ArrayList<Field>();
 
     /** Visible legend entries, keyed by plot line. */
     private Map<MultiplexingXYPlotLine, LegendItem> legendItems = new HashMap<MultiplexingXYPlotLine, LegendItem>();
@@ -713,12 +714,14 @@ public class TailPlot {
                     assert e.getFirstRow() == e.getLastRow();
                     int row = e.getFirstRow();
                     int col = e.getColumn();
-                    MultiplexingXYPlotLine pline = plotLines.get(row);
+                    Field field = fields.get(row);
+                    XYPlotLine pline = field.getPlotLine();
                     Legend legend = frame.getLegend();
                     LegendItem item = legendItems.get(pline);
                     if(col == 0) {
                         String name = (String) tableModel.getValueAt(row, col);
                         item.setDescription(name);
+                        field.setName(name);
                     } else {
                         assert col == 1;
                         boolean visible = (Boolean) tableModel.getValueAt(row, col);
@@ -865,12 +868,13 @@ public class TailPlot {
     }
 
 
-    void addPlotLine(String name, MultiplexingXYPlotLine pline, Stroke highlightStroke, Shape highlightPointFill,
+    void addPlotLine(Field field, MultiplexingXYPlotLine pline, Stroke highlightStroke, Shape highlightPointFill,
             Shape highlightPointOutline) {
         assert SwingUtilities.isEventDispatchThread();
-        plotLines.add(pline);
+        String name = field.getName();
+        fields.add(field);
 
-        LegendItem item = frame.addPlotLine(name, pline, highlightStroke, highlightPointFill, highlightPointOutline);
+        LegendItem item = frame.addPlotLine(field, highlightStroke, highlightPointFill, highlightPointOutline);
         legendItems.put(pline, item);
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridwidth = GridBagConstraints.REMAINDER;
