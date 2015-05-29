@@ -42,7 +42,6 @@ import javax.swing.JFrame;
 import javax.swing.SpringLayout;
 import javax.swing.SwingConstants;
 import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
 
 import plotter.Legend;
 import plotter.LegendItem;
@@ -94,6 +93,9 @@ public class XYPlotFrame extends JFrame {
 
 	/** Listeners to be notified when an axis is panned or zoomed. */
 	private List<AxisListener> axisListeners = new ArrayList<AxisListener>();
+
+	/** Highlights data points and displays their values. */
+	private PointHighlighter pointHighlighter;
 
 
 	public void setup() {
@@ -174,6 +176,10 @@ public class XYPlotFrame extends JFrame {
 		SlopeLine slopeLine = new SlopeLine();
 		slopeLine.setForeground(Color.white);
 		slopeLine.attach(plot);
+
+		pointHighlighter = new PointHighlighter();
+		pointHighlighter.setForeground(Color.white);
+		pointHighlighter.attach(plot);
 
 		slopeLineDisplay = new SlopeLineDisplay();
 		slopeLine.addListenerForPlot(plot, slopeLineDisplay);
@@ -276,6 +282,7 @@ public class XYPlotFrame extends JFrame {
 		if(grid2 != null) {
 			contents.setComponentZOrder(grid2, contents.getComponentCount() - 1);
 		}
+		pointHighlighter.addField(field);
 		return item;
 	}
 
@@ -380,6 +387,15 @@ public class XYPlotFrame extends JFrame {
      */
     public void addAxisListener(AxisListener listener) {
         axisListeners.add(listener);
+    }
+
+
+    /**
+     * Returns the point highlighter.
+     * @return the point highlighter
+     */
+    public PointHighlighter getPointHighlighter() {
+        return pointHighlighter;
     }
 
 

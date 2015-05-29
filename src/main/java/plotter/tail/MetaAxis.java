@@ -43,6 +43,9 @@ abstract class MetaAxis implements AxisListener {
 
     private NumberFormat format = new MultiscaleNumberFormat();
 
+    /** Format for displaying values more precisely. */
+    private NumberFormat preciseFormat = new MultiscaleNumberFormat(new DecimalFormat("#.######"), new DecimalFormat("0.######E0"), .01, 999.5);
+
     // Only access from the Swing thread
     private double min;
 
@@ -201,6 +204,24 @@ abstract class MetaAxis implements AxisListener {
             }
             axis.setFormat(format);
         }
+    }
+
+
+    /**
+     * Returns the format for displaying values more precisely.
+     * @return the format for displaying values more precisely
+     */
+    public NumberFormat getPreciseFormat() {
+        return preciseFormat;
+    }
+
+
+    /**
+     * Sets the format for displaying values more precisely.
+     * @param preciseFormat the format for displaying values more precisely
+     */
+    public void setPreciseFormat(NumberFormat preciseFormat) {
+        this.preciseFormat = preciseFormat;
     }
 
 

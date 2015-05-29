@@ -65,6 +65,7 @@ import plotter.DoubleData;
 import plotter.Legend;
 import plotter.LegendItem;
 import plotter.xy.LinearXYAxis;
+import plotter.xy.PointData;
 import plotter.xy.SimpleXYDataset;
 import plotter.xy.XYAxis;
 import plotter.xy.XYPlotLine;
@@ -83,6 +84,9 @@ public class TailPlot {
     private XYAxis yAxis;
 
     private XYAxis y2Axis;
+
+    /** Highlights data points and displays their values. */
+    private PointHighlighter pointHightlighter;
 
     private Iterator<Color> colors;
 
@@ -103,6 +107,7 @@ public class TailPlot {
 
         @Override
         protected void logscaleUpdated(boolean logscale) {
+            pointHightlighter.setLogX(logscale);
             locationFormat.setLogX(logscale);
             slopeFormat.setLogX(logscale);
             frame.getPlot().repaint();
@@ -135,6 +140,7 @@ public class TailPlot {
 
         @Override
         protected void logscaleUpdated(boolean logscale) {
+            pointHightlighter.setLogY(logscale);
             locationFormat.setLogY(logscale);
             slopeFormat.setLogY(logscale);
             frame.getPlot().repaint();
@@ -167,6 +173,7 @@ public class TailPlot {
 
         @Override
         protected void logscaleUpdated(boolean logscale) {
+            pointHightlighter.setLogY2(logscale);
             frame.getPlot().repaint();
         }
 
@@ -281,37 +288,13 @@ public class TailPlot {
                 dataFile.addFieldFormat(fieldIx, fmt);
             } else if(args[i].startsWith("--x-format=")) {
                 String format = args[i].substring("--x-format=".length());
-                NumberFormat fmt;
-                try {
-                    fmt = parseFormat(format);
-                } catch(ParseException e) {
-                    System.err.println(e.getMessage());
-                    System.exit(-1);
-                    fmt = null;
-                }
-                metaX.setFormat(fmt);
+                setAxisFormat(metaX, format);
             } else if(args[i].startsWith("--y-format=")) {
                 String format = args[i].substring("--y-format=".length());
-                NumberFormat fmt;
-                try {
-                    fmt = parseFormat(format);
-                } catch(ParseException e) {
-                    System.err.println(e.getMessage());
-                    System.exit(-1);
-                    fmt = null;
-                }
-                metaY.setFormat(fmt);
+                setAxisFormat(metaY, format);
             } else if(args[i].startsWith("--y2-format=")) {
                 String format = args[i].substring("--y2-format=".length());
-                NumberFormat fmt;
-                try {
-                    fmt = parseFormat(format);
-                } catch(ParseException e) {
-                    System.err.println(e.getMessage());
-                    System.exit(-1);
-                    fmt = null;
-                }
-                metaY2.setFormat(fmt);
+                setAxisFormat(metaY2, format);
             } else if(args[i].equals("--header-line") || args[i].equals("-h")) {
                 dataFile.setHeaderLine(true);
             } else if(args[i].equals("-t")) {
@@ -350,6 +333,27 @@ public class TailPlot {
             }
         }
         dataFiles.add(dataFile);
+    }
+
+
+    /**
+     * Sets the format for an axis based on the command line spec.
+     * @param axis axis whose format to set
+     * @param format format specified on the command line
+     */
+    private void setAxisFormat(MetaAxis axis, String format) {
+        NumberFormat fmt;
+        try {
+            fmt = parseFormat(format);
+        } catch(ParseException e) {
+            System.err.println(e.getMessage());
+            System.exit(-1);
+            fmt = null;
+        }
+        axis.setFormat(fmt);
+        if(fmt instanceof DateNumberFormat) {
+            axis.setPreciseFormat(fmt);
+        }
     }
 
 
@@ -432,37 +436,13 @@ public class TailPlot {
                 }
             } else if(args[i].startsWith("--x-format=")) {
                 String format = args[i].substring("--x-format=".length());
-                NumberFormat fmt;
-                try {
-                    fmt = parseFormat(format);
-                } catch(ParseException e) {
-                    System.err.println(e.getMessage());
-                    System.exit(-1);
-                    fmt = null;
-                }
-                metaX.setFormat(fmt);
+                setAxisFormat(metaX, format);
             } else if(args[i].startsWith("--y-format=")) {
                 String format = args[i].substring("--y-format=".length());
-                NumberFormat fmt;
-                try {
-                    fmt = parseFormat(format);
-                } catch(ParseException e) {
-                    System.err.println(e.getMessage());
-                    System.exit(-1);
-                    fmt = null;
-                }
-                metaY.setFormat(fmt);
+                setAxisFormat(metaY, format);
             } else if(args[i].startsWith("--y2-format=")) {
                 String format = args[i].substring("--y2-format=".length());
-                NumberFormat fmt;
-                try {
-                    fmt = parseFormat(format);
-                } catch(ParseException e) {
-                    System.err.println(e.getMessage());
-                    System.exit(-1);
-                    fmt = null;
-                }
-                metaY2.setFormat(fmt);
+                setAxisFormat(metaY2, format);
             } else if(args[i].equals("--header-line") || args[i].equals("-h")) {
                 if(dataFile == null) {
                     usage(args[i] + " must be used after file argument");
@@ -820,6 +800,11 @@ public class TailPlot {
                 AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
         legend.setToolTipText("Shift-drag to move legend");
 
+        pointHightlighter = frame.getPointHighlighter();
+        pointHightlighter.setXFormat(metaX.getPreciseFormat());
+        pointHightlighter.setYFormat(metaY.getPreciseFormat());
+        pointHightlighter.setY2Format(metaY.getPreciseFormat());
+
         frame.setSize(400, 300);
         frame.setVisible(true);
 
@@ -939,6 +924,7 @@ public class TailPlot {
         metaY.commitMinMax();
         metaY2.commitMinMax();
         metaX.commitMinMax();
+        pointHightlighter.updateDisplay();
     }
 
 
