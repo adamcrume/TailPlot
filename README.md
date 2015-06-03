@@ -2,6 +2,8 @@ TailPlot
 --
 Plots a file, displaying new data as it is generated (analogous to 'tail -f')
 
+![Screenshot](src/site/resources/images/tailplot-screenshot.png)
+
 Building
 --
 1. Clone [patched version of MCT from GitHub](https://github.com/adamcrume/mct.git)
