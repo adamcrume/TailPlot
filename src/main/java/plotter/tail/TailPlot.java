@@ -21,9 +21,11 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -730,6 +732,14 @@ public class TailPlot {
         frame.setContentPane(splitPane);
         frame.setTitle(title);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        List<Image> icons = new ArrayList<Image>();
+        Class<? extends TailPlot> c = getClass();
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        icons.add(toolkit.getImage(c.getResource("icon_16x16.png")));
+        icons.add(toolkit.getImage(c.getResource("icon_24x24.png")));
+        icons.add(toolkit.getImage(c.getResource("icon_32x32.png")));
+        icons.add(toolkit.getImage(c.getResource("icon_48x48.png")));
+        frame.setIconImages(icons);
         frame.setup(content);
 
         xAxis = (LinearXYAxis) frame.getXAxis();
